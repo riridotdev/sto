@@ -12,7 +12,7 @@ make
 
 ## Installation
 ```
-go install https://github.com/riridotdev/sto
+go install github.com/riridotdev/sto@latest
 ```
 
 ## Example Usage
