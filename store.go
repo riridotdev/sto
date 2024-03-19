@@ -225,7 +225,7 @@ func (s store) _applyEntry(entry storeEntry) error {
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return fmt.Errorf("Error reading link stat at %q: %w", entry.Destination, err)
 	}
-	if stat.Mode()&os.ModeSymlink != os.ModeSymlink {
+	if err == nil && stat.Mode()&os.ModeSymlink != os.ModeSymlink {
 		fmt.Printf("Found existing file at %q\n", entry.Destination)
 		fmt.Printf("Do you want to delete this file? [y/n]\n")
 
