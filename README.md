@@ -21,7 +21,7 @@ go install github.com/riridotdev/sto@latest
 sto init
 ```
 
-##### Manage a file with Sto
+##### Manage a file/directory with Sto
 ```
 sto pull [target-path]
 ```
