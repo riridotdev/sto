@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/riridotdev/sto"
 	"github.com/spf13/cobra"
 )
 
@@ -12,13 +13,13 @@ var pushCmd = &cobra.Command{
 	Short: "Create a symlink for the named Sto entry",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		s := readStoreOrFail(root)
+		s := sto.ReadStoreOrFail(root)
 
 		fmt.Printf("Creating symlinks...\n")
 		for _, arg := range args {
 
-			if err := s.applyEntry(arg); err != nil {
-				if errors.Is(err, errLinkAlreadyExists) {
+			if err := s.ApplyEntry(arg); err != nil {
+				if errors.Is(err, sto.ErrLinkAlreadyExists) {
 					fmt.Printf("\t%s: Already exists\n", arg)
 					continue
 				}

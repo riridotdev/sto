@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/riridotdev/sto"
 	"github.com/spf13/cobra"
 )
 
@@ -14,14 +15,14 @@ var moveCmd = &cobra.Command{
 		entryName := args[0]
 		newPath := args[1]
 
-		s := readStoreOrFail(root)
+		s := sto.ReadStoreOrFail(root)
 
-		if err := s.moveEntry(entryName, newPath); err != nil {
-			fail("Error moving entry: %s", err)
+		if err := s.MoveEntry(entryName, newPath); err != nil {
+			sto.Fail("Error moving entry: %s", err)
 		}
 
-		if err := s.write(); err != nil {
-			fail("Error writing store: %s", err)
+		if err := s.Write(); err != nil {
+			sto.Fail("Error writing store: %s", err)
 		}
 
 		fmt.Printf("Successfully moved entry %s to %s", entryName, newPath)

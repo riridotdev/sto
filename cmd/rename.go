@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/riridotdev/sto"
 	"github.com/spf13/cobra"
 )
 
@@ -12,14 +13,14 @@ var renameCmd = &cobra.Command{
 		entryName := args[0]
 		newName := args[1]
 
-		s := readStoreOrFail(root)
+		s := sto.ReadStoreOrFail(root)
 
-		if err := s.renameEntry(entryName, newName); err != nil {
-			fail("Error renaming entry: %s", err)
+		if err := s.RenameEntry(entryName, newName); err != nil {
+			sto.Fail("Error renaming entry: %s", err)
 		}
 
-		if err := s.write(); err != nil {
-			fail("Error writing to store: %s", err)
+		if err := s.Write(); err != nil {
+			sto.Fail("Error writing to store: %s", err)
 		}
 	},
 }

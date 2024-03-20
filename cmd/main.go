@@ -6,9 +6,11 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+
+    "github.com/riridotdev/sto"
 )
 
-var userHome = userHomeMust()
+var userHome = sto.UserHomeMust()
 
 var configPath string
 var defaultConfigPath = fmt.Sprintf("%s/.config/sto/config", userHome)
@@ -30,11 +32,11 @@ func main() {
 			if err != nil {
 				if errors.Is(err, os.ErrNotExist) {
 					if !(cmd.Name() == "init" || cmd.Name() == "switch") {
-						fail("No active profile set, use 'sto init', or 'sto switch [profile]'")
+						sto.Fail("No active profile set, use 'sto init', or 'sto switch [profile]'")
 					}
 					return
 				}
-				fail("Error reading state file at %q: %s", stateFilePath, err)
+				sto.Fail("Error reading state file at %q: %s", stateFilePath, err)
 			}
 			root = string(stateBytes)
 		},

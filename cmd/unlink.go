@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/riridotdev/sto"
 	"github.com/spf13/cobra"
 )
 
@@ -11,10 +12,10 @@ var unlinkCmd = &cobra.Command{
 	Short: "Remove the symlink to a currently linked Sto item",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		s := readStoreOrFail(root)
+		s := sto.ReadStoreOrFail(root)
 
 		for _, arg := range args {
-			if err := s.unapplyEntry(arg); err != nil {
+			if err := s.UnapplyEntry(arg); err != nil {
 				fmt.Printf("Error unlinking entry %q: %s\n", arg, err)
 				continue
 			}

@@ -1,4 +1,4 @@
-package main
+package sto
 
 import (
 	"bufio"
@@ -17,8 +17,8 @@ import (
 //
 // To persist changes to disk call the write method.
 type store struct {
-	store map[string]storeEntry
-	root  string
+	Store map[string]storeEntry
+	Root  string
 	dirty bool // True if there are changes not persisted to disk.
 }
 
@@ -46,26 +46,26 @@ func readStore(root string) (store, error) {
 	decoder.Decode(&entries)
 
 	s := store{
-		store: map[string]storeEntry{},
-		root:  root,
+		Store: map[string]storeEntry{},
+		Root:  root,
 	}
 
 	for _, entry := range entries {
-		s.store[entry.Name] = entry
+		s.Store[entry.Name] = entry
 	}
 
 	return s, nil
 }
 
-// write persists any changes to the store back to disk.
+// Write persists any changes to the store back to disk.
 //
 // The changes will be written to the .sto file at the store's root.
-func (s *store) write() error {
+func (s *store) Write() error {
 	if !s.dirty {
 		return nil
 	}
 
-	storeFilePath := fmt.Sprintf("%s/.sto", s.root)
+	storeFilePath := fmt.Sprintf("%s/.sto", s.Root)
 
 	file, err := os.OpenFile(storeFilePath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0600)
 	if err != nil {
@@ -75,7 +75,7 @@ func (s *store) write() error {
 
 	encoder := json.NewEncoder(file)
 
-	if err := encoder.Encode(s.entries()); err != nil {
+	if err := encoder.Encode(s.Entries()); err != nil {
 		return fmt.Errorf("error writing to store file: %w", err)
 	}
 
@@ -84,10 +84,10 @@ func (s *store) write() error {
 	return nil
 }
 
-// entries returns all of the entries managed by a store, sorted alphabetically by name.
-func (s *store) entries() []storeEntry {
+// Entries returns all of the Entries managed by a store, sorted alphabetically by name.
+func (s *store) Entries() []storeEntry {
 	entries := []storeEntry{}
-	for _, entry := range s.store {
+	for _, entry := range s.Store {
 		entries = append(entries, entry)
 	}
 	sort.Slice(entries, func(i, j int) bool {
@@ -96,25 +96,25 @@ func (s *store) entries() []storeEntry {
 	return entries
 }
 
-// add creates a new entry in the store for a given source directory and destination directory,
+// Add creates a new entry in the store for a given source directory and destination directory,
 // then creates a symlink from the source to the destination.
 //
 // The entry source should be provided as a relative path in relation to the store's root,
 // the entry destination should be provided as an absolute path.
-func (s *store) add(source, destination string) error {
-	source = fmt.Sprintf("%s/%s", s.root, source)
+func (s *store) Add(source, destination string) error {
+	source = fmt.Sprintf("%s/%s", s.Root, source)
 
-	if !strings.HasPrefix(source, s.root) {
-		return fmt.Errorf("cannot add sources from outside the sto root (%q)\n", defaultRoot)
+	if !strings.HasPrefix(source, s.Root) {
+		return fmt.Errorf("cannot add sources from outside the sto root (%q)\n", s.Root)
 	}
 
 	if _, err := os.Stat(source); err != nil {
 		return fmt.Errorf("couldn't locate valid sto item at %q\n", source)
 	}
 
-	name := trimStoRoot(source, s.root)
+	name := trimStoRoot(source, s.Root)
 
-	if linkedLocation, ok := s.store[name]; ok {
+	if linkedLocation, ok := s.Store[name]; ok {
 		return fmt.Errorf("item %q already linked at %q\n", name, linkedLocation)
 	}
 
@@ -128,18 +128,18 @@ func (s *store) add(source, destination string) error {
 		return fmt.Errorf("Error linking entry %q: %w", entry.Name, err)
 	}
 
-	s.store[name] = entry
+	s.Store[name] = entry
 
 	s.dirty = true
 
 	return nil
 }
 
-// removeEntry removes an entry from the store.
+// RemoveEntry removes an entry from the store.
 //
 // If the entry is currently linked, the link will be removed.
-func (s *store) removeEntry(name string) error {
-	entry, ok := s.store[name]
+func (s *store) RemoveEntry(name string) error {
+	entry, ok := s.Store[name]
 	if !ok {
 		return fmt.Errorf("Entry %q not found", name)
 	}
@@ -154,14 +154,14 @@ func (s *store) removeEntry(name string) error {
 		}
 	}
 
-	delete(s.store, name)
+	delete(s.Store, name)
 
 	s.dirty = true
 
 	return nil
 }
 
-// checkEntry evaluates the current state of an item.
+// CheckEntry evaluates the current state of an item.
 //
 // This includes a series of checks including the presence of
 // the source item, the presence of a symlink at the destination,
@@ -169,18 +169,18 @@ func (s *store) removeEntry(name string) error {
 // and any pre-existing symlinks.
 // Will return false if the entry is unlinked, and will return an error if
 // there are inconsistencies between the system state and definition state.
-func (s store) checkEntry(name string) (bool, error) {
-	entry, ok := s.store[name]
+func (s store) CheckEntry(name string) (bool, error) {
+	entry, ok := s.Store[name]
 	if !ok {
 		return false, fmt.Errorf("Entry %q not found", name)
 	}
 
-	sourcePath := fmt.Sprintf("%s/%s", s.root, entry.Source)
+	sourcePath := fmt.Sprintf("%s/%s", s.Root, entry.Source)
 	if _, err := os.Stat(sourcePath); err != nil {
 		if !errors.Is(err, os.ErrNotExist) {
 			return false, fmt.Errorf("Error checking file stat at %q: %s", sourcePath, err)
 		}
-		return false, errEntrySourceInvalid
+		return false, ErrEntrySourceInvalid
 	}
 
 	stat, err := os.Lstat(entry.Destination)
@@ -188,7 +188,7 @@ func (s store) checkEntry(name string) (bool, error) {
 		return false, fmt.Errorf("Error checking link stat at %q: %s", entry.Destination, err)
 	}
 	if stat.Mode()&os.ModeSymlink != os.ModeSymlink {
-		return false, errExistingFileAtDestination
+		return false, ErrExistingFileAtDestination
 	}
 
 	link, err := os.Readlink(entry.Destination)
@@ -200,15 +200,15 @@ func (s store) checkEntry(name string) (bool, error) {
 	}
 
 	if link != sourcePath {
-		return false, errExistingSymlinkMismatch(link)
+		return false, ErrExistingSymlinkMismatch(link)
 	}
 
 	return true, nil
 }
 
-// applyEntry creates a symlink as defined by the entry definition managed under the given name.
-func (s store) applyEntry(name string) error {
-	entry, ok := s.store[name]
+// ApplyEntry creates a symlink as defined by the entry definition managed under the given name.
+func (s store) ApplyEntry(name string) error {
+	entry, ok := s.Store[name]
 	if !ok {
 		return fmt.Errorf("Item %q not found", name)
 	}
@@ -219,7 +219,7 @@ func (s store) applyEntry(name string) error {
 // This is a helper method that provides shared functionality and should not be called on its own.
 // store.applyEntry() or store.add() should be used instead.
 func (s store) _applyEntry(entry storeEntry) error {
-	sourcePath := fmt.Sprintf("%s/%s", s.root, entry.Source)
+	sourcePath := fmt.Sprintf("%s/%s", s.Root, entry.Source)
 
 	stat, err := os.Lstat(entry.Destination)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
@@ -232,7 +232,7 @@ func (s store) _applyEntry(entry storeEntry) error {
 		input := bufio.NewReader(os.Stdin)
 		line, _, err := input.ReadLine()
 		if err != nil {
-			fail("Error reading input: %s\n", err)
+			Fail("Error reading input: %s\n", err)
 		}
 		if !(line[0] == 'y' || line[0] == 'Y') {
 			return nil
@@ -248,7 +248,7 @@ func (s store) _applyEntry(entry storeEntry) error {
 		if link != sourcePath {
 			return fmt.Errorf("Prexisting link %q -> %q", link, entry.Destination)
 		}
-		return errLinkAlreadyExists
+		return ErrLinkAlreadyExists
 	}
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return fmt.Errorf("Error reading link at %q: %w", entry.Destination, err)
@@ -261,9 +261,9 @@ func (s store) _applyEntry(entry storeEntry) error {
 	return nil
 }
 
-// unapplyEntry removes a symlink as defined by the entry managed under the given name.
-func (s *store) unapplyEntry(name string) error {
-	entry, ok := s.store[name]
+// UnapplyEntry removes a symlink as defined by the entry managed under the given name.
+func (s *store) UnapplyEntry(name string) error {
+	entry, ok := s.Store[name]
 	if !ok {
 		return fmt.Errorf("Entry %q not found", name)
 	}
@@ -277,41 +277,41 @@ func (s *store) _unapplyEntry(entry storeEntry) error {
 	return nil
 }
 
-// renameEntry updates the name under which a symlink is managed.
+// RenameEntry updates the name under which a symlink is managed.
 //
 // Calling this method has no effect on the name of the entry's source directory.
-func (s *store) renameEntry(entryName, newName string) error {
-	entry, ok := s.store[entryName]
+func (s *store) RenameEntry(entryName, newName string) error {
+	entry, ok := s.Store[entryName]
 	if !ok {
 		return errEntryNotFound
 	}
 
-	if _, ok := s.store[newName]; ok {
+	if _, ok := s.Store[newName]; ok {
 		return errEntryAlreadyExists
 	}
 
 	entry.Name = newName
 
-	s.store[newName] = entry
-	delete(s.store, entryName)
+	s.Store[newName] = entry
+	delete(s.Store, entryName)
 
 	s.dirty = true
 
 	return nil
 }
 
-// moveEntry moves the file managed under the given name to a new destination at the given path.
+// MoveEntry moves the file managed under the given name to a new destination at the given path.
 //
 // If the entry is currently linked, the old symlink will be removed and recreated with the updated path.
-func (s *store) moveEntry(entryName, newPath string) error {
-	entry, ok := s.store[entryName]
+func (s *store) MoveEntry(entryName, newPath string) error {
+	entry, ok := s.Store[entryName]
 	if !ok {
 		return errEntryNotFound
 	}
 
 	newPath, err := filepath.Abs(newPath)
-	if !strings.HasPrefix(newPath, s.root) {
-		return fmt.Errorf("cannot move a source outside the sto root (%q)\n", defaultRoot)
+	if !strings.HasPrefix(newPath, s.Root) {
+		return fmt.Errorf("cannot move a source outside the sto root (%q)\n", s.Root)
 	}
 
 	_, err = os.Stat(newPath)
@@ -332,12 +332,12 @@ func (s *store) moveEntry(entryName, newPath string) error {
 		}
 	}
 
-	sourcePath := fmt.Sprintf("%s/%s", s.root, entry.Source)
+	sourcePath := fmt.Sprintf("%s/%s", s.Root, entry.Source)
 	if err := os.Rename(sourcePath, newPath); err != nil {
 		return fmt.Errorf("Error moving entry from %q to %q: %s", sourcePath, newPath, err)
 	}
 
-	entry.Source = trimStoRoot(newPath, s.root)
+	entry.Source = trimStoRoot(newPath, s.Root)
 
 	if linked {
 		if err := s._applyEntry(entry); err != nil {
@@ -345,7 +345,7 @@ func (s *store) moveEntry(entryName, newPath string) error {
 		}
 	}
 
-	s.store[entry.Name] = entry
+	s.Store[entry.Name] = entry
 
 	s.dirty = true
 
@@ -361,5 +361,5 @@ func (s store) isLinked(entry storeEntry) (bool, error) {
 		}
 		return false, nil
 	}
-	return link == fmt.Sprintf("%s/%s", s.root, entry.Source), nil
+	return link == fmt.Sprintf("%s/%s", s.Root, entry.Source), nil
 }

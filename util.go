@@ -1,4 +1,4 @@
-package main
+package sto
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 // userHomeMust returns the user's home directory.
 //
 // On error it will panic.
-func userHomeMust() string {
+func UserHomeMust() string {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		panic(fmt.Errorf("error reading user home dir: %s", err))
@@ -33,7 +33,7 @@ func trimStoRoot(path string, root string) string {
 }
 
 // fail prints the provided formatted string to stdout and terminates the current process with an exit code of 1.
-func fail(format string, params ...interface{}) {
+func Fail(format string, params ...interface{}) {
 	fmt.Println(fmt.Sprintf(format, params...))
 	os.Exit(1)
 }
@@ -41,10 +41,10 @@ func fail(format string, params ...interface{}) {
 // readStoreOrFail returns the store found at the provided root directory.
 //
 // On fail it will print an error message to stdout and terminate the current process with an exit code of 1.
-func readStoreOrFail(root string) store {
+func ReadStoreOrFail(root string) store {
 	s, err := readStore(root)
 	if err != nil {
-		fail("Error reading store: %s", err)
+		Fail("Error reading store: %s", err)
 	}
 	return s
 }
