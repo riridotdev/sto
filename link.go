@@ -46,6 +46,26 @@ func (l link) unlink() error {
 	return nil
 }
 
+func (l link) state() linkState {
+	return unlinked
+}
+
+type linkState byte
+
+const (
+	_ linkState = iota
+	unlinked
+)
+
+func (ls linkState) String() string {
+	switch ls {
+	case unlinked:
+		return "unlinked"
+	default:
+		panic(fmt.Sprintf("unrecognised state: %d", ls))
+	}
+}
+
 type conflictingLinkError link
 
 func (e conflictingLinkError) Error() string {

@@ -93,6 +93,16 @@ func TestUnlink(t *testing.T) {
 	})
 }
 
+func TestState(t *testing.T) {
+	t.Run("returns unlinked when unlinked", func(t *testing.T) {
+		l := newTestLink(t)
+
+		if l.state() != unlinked {
+			t.Errorf("link.state() = %s; want %s", l.state(), unlinked)
+		}
+	})
+}
+
 func newTestLink(t *testing.T) link {
 	t.Helper()
 
