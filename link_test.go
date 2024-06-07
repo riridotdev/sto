@@ -117,6 +117,22 @@ func TestState(t *testing.T) {
 			t.Errorf("link.state() = %s; want %s", state, linked)
 		}
 	})
+	t.Run("returns conflict when another link exists at the destination", func(t *testing.T) {
+		conflictingLink := newTestLink(t)
+
+		err := conflictingLink.link()
+		noErr(t, err)
+
+		l := newTestLink(t)
+		l.destinationPath = conflictingLink.destinationPath
+
+		state, err := l.state()
+		noErr(t, err)
+
+		if state != conflict {
+			t.Errorf("link.state() = %s; want %s", state, conflict)
+		}
+	})
 }
 
 func newTestLink(t *testing.T) link {

@@ -55,6 +55,14 @@ func (l link) state() (linkState, error) {
 		return unknown, fmt.Errorf("reading stat %q: %v", l.destinationPath, err)
 	}
 
+	resolvedPath, err := os.Readlink(l.destinationPath)
+	if err != nil {
+		return unknown, fmt.Errorf("resolving link %q: %v", l.destinationPath, err)
+	}
+	if resolvedPath != l.sourcePath {
+		return conflict, nil
+	}
+
 	return linked, nil
 }
 
@@ -64,6 +72,7 @@ const (
 	_ linkState = iota
 	linked
 	unlinked
+	conflict
 	unknown
 )
 
@@ -73,6 +82,8 @@ func (ls linkState) String() string {
 		return "linked"
 	case unlinked:
 		return "unlinked"
+	case conflict:
+		return "conflict"
 	case unknown:
 		return "unknown"
 	default:
