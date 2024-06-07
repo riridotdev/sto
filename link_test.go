@@ -39,6 +39,19 @@ func TestUnlink(t *testing.T) {
 			t.Errorf("os.ReadLink(%q) = _, %q; want _, %q", l.destinationPath, err, os.ErrNotExist)
 		}
 	})
+	t.Run("behave idempotently when unlinking", func(t *testing.T) {
+		l := newTestLink(t)
+
+		err := l.link()
+		noErr(t, err)
+
+		err = l.unlink()
+		noErr(t, err)
+
+		if err := l.unlink(); err != nil {
+			t.Errorf("link.unlink() = %q; want nil", err)
+		}
+	})
 }
 
 func newTestLink(t *testing.T) link {
