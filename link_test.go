@@ -31,6 +31,21 @@ func TestLink(t *testing.T) {
 			t.Errorf("link.link() = %q; want nil", err)
 		}
 	})
+	t.Run("fail when existing symlink at destination resolves to a different source", func(t *testing.T) {
+		l := newTestLink(t)
+
+		err := l.link()
+		noErr(t, err)
+
+		conflictingLink := newTestLink(t)
+		conflictingLink.destinationPath = l.destinationPath
+
+		wantErr := conflictingLinkError(l)
+
+		if err := conflictingLink.link(); err != wantErr {
+			t.Errorf("link.link = %q; want %q", err, wantErr)
+		}
+	})
 }
 
 func TestUnlink(t *testing.T) {

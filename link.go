@@ -21,9 +21,13 @@ func (l link) link() error {
 		if err != nil {
 			return fmt.Errorf("resolving symlink at %q: %v", l.destinationPath, err)
 		}
-		if resolvedLink == l.sourcePath {
-			return nil
+		if resolvedLink != l.sourcePath {
+			return conflictingLinkError(link{
+				sourcePath:      resolvedLink,
+				destinationPath: l.destinationPath,
+			})
 		}
+		return nil
 	}
 
 	if err := os.Symlink(l.sourcePath, l.destinationPath); err != nil {
@@ -37,4 +41,10 @@ func (l link) unlink() error {
 		return fmt.Errorf("removing symlink at %q: %v", l.destinationPath, err)
 	}
 	return nil
+}
+
+type conflictingLinkError link
+
+func (e conflictingLinkError) Error() string {
+	return fmt.Sprintf("conflicting symlink %q -> %q", e.destinationPath, e.sourcePath)
 }
