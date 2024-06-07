@@ -12,11 +12,14 @@ type link struct {
 }
 
 func (l link) link() error {
-	_, err := os.Lstat(l.destinationPath)
+	stat, err := os.Lstat(l.destinationPath)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return fmt.Errorf("reading link stat for %q: %v", l.destinationPath, err)
 	}
 	if err == nil {
+		if stat.Mode()&os.ModeSymlink != os.ModeSymlink {
+			return conflictingItemError(l.destinationPath)
+		}
 		resolvedLink, err := os.Readlink(l.destinationPath)
 		if err != nil {
 			return fmt.Errorf("resolving symlink at %q: %v", l.destinationPath, err)
@@ -47,4 +50,10 @@ type conflictingLinkError link
 
 func (e conflictingLinkError) Error() string {
 	return fmt.Sprintf("conflicting symlink %q -> %q", e.destinationPath, e.sourcePath)
+}
+
+type conflictingItemError string
+
+func (e conflictingItemError) Error() string {
+	return fmt.Sprintf("conflicting item at %q", string(e))
 }

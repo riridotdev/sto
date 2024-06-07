@@ -46,6 +46,20 @@ func TestLink(t *testing.T) {
 			t.Errorf("link.link = %q; want %q", err, wantErr)
 		}
 	})
+	t.Run("fail when file exists at destination", func(t *testing.T) {
+		l := newTestLink(t)
+
+		f, err := os.Create(l.destinationPath)
+		noErr(t, err)
+		f.Close()
+		defer os.Remove(l.destinationPath)
+
+		wantErr := conflictingItemError(l.destinationPath)
+
+		if err := l.link(); err != wantErr {
+			t.Errorf("link.link = %q; want %q", err, wantErr)
+		}
+	})
 }
 
 func TestUnlink(t *testing.T) {
