@@ -46,21 +46,35 @@ func (l link) unlink() error {
 	return nil
 }
 
-func (l link) state() linkState {
-	return unlinked
+func (l link) state() (linkState, error) {
+	_, err := os.Lstat(l.destinationPath)
+	if errors.Is(err, os.ErrNotExist) {
+		return unlinked, nil
+	}
+	if err != nil {
+		return unknown, fmt.Errorf("reading stat %q: %v", l.destinationPath, err)
+	}
+
+	return linked, nil
 }
 
 type linkState byte
 
 const (
 	_ linkState = iota
+	linked
 	unlinked
+	unknown
 )
 
 func (ls linkState) String() string {
 	switch ls {
+	case linked:
+		return "linked"
 	case unlinked:
 		return "unlinked"
+	case unknown:
+		return "unknown"
 	default:
 		panic(fmt.Sprintf("unrecognised state: %d", ls))
 	}

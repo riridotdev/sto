@@ -97,8 +97,24 @@ func TestState(t *testing.T) {
 	t.Run("returns unlinked when unlinked", func(t *testing.T) {
 		l := newTestLink(t)
 
-		if l.state() != unlinked {
-			t.Errorf("link.state() = %s; want %s", l.state(), unlinked)
+		state, err := l.state()
+		noErr(t, err)
+
+		if state != unlinked {
+			t.Errorf("link.state() = %s; want %s", state, unlinked)
+		}
+	})
+	t.Run("returns linked when linked", func(t *testing.T) {
+		l := newTestLink(t)
+
+		err := l.link()
+		noErr(t, err)
+
+		state, err := l.state()
+		noErr(t, err)
+
+		if state != linked {
+			t.Errorf("link.state() = %s; want %s", state, linked)
 		}
 	})
 }
