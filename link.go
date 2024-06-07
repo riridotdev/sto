@@ -47,12 +47,15 @@ func (l link) unlink() error {
 }
 
 func (l link) state() (linkState, error) {
-	_, err := os.Lstat(l.destinationPath)
+	state, err := os.Lstat(l.destinationPath)
 	if errors.Is(err, os.ErrNotExist) {
 		return unlinked, nil
 	}
 	if err != nil {
 		return unknown, fmt.Errorf("reading stat %q: %v", l.destinationPath, err)
+	}
+	if state.Mode()&os.ModeSymlink != os.ModeSymlink {
+		return conflict, nil
 	}
 
 	resolvedPath, err := os.Readlink(l.destinationPath)

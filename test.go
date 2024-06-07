@@ -35,3 +35,11 @@ func newTestFile(t testing.TB, dir string) string {
 
 	return filePath
 }
+
+func removeFile(t testing.TB, path string) {
+	t.Helper()
+
+	if err := os.Remove(path); err != nil {
+		t.Fatalf("deleting file %q: %v", path, err)
+	}
+}

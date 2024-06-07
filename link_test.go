@@ -133,6 +133,21 @@ func TestState(t *testing.T) {
 			t.Errorf("link.state() = %s; want %s", state, conflict)
 		}
 	})
+	t.Run("returns conflict when a file exists at the destination", func(t *testing.T) {
+		l := newTestLink(t)
+
+		f, err := os.Create(l.destinationPath)
+		noErr(t, err)
+		f.Close()
+		defer removeFile(t, l.destinationPath)
+
+		state, err := l.state()
+		noErr(t, err)
+
+		if state != conflict {
+			t.Errorf("link.state() = %s; want %s", state, conflict)
+		}
+	})
 }
 
 func newTestLink(t *testing.T) link {
