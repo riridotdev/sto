@@ -12,6 +12,20 @@ type link struct {
 }
 
 func (l link) link() error {
+	_, err := os.Lstat(l.destinationPath)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("reading link stat for %q: %v", l.destinationPath, err)
+	}
+	if err == nil {
+		resolvedLink, err := os.Readlink(l.destinationPath)
+		if err != nil {
+			return fmt.Errorf("resolving symlink at %q: %v", l.destinationPath, err)
+		}
+		if resolvedLink == l.sourcePath {
+			return nil
+		}
+	}
+
 	if err := os.Symlink(l.sourcePath, l.destinationPath); err != nil {
 		return fmt.Errorf("creating symlink %q -> %q: %v", l.destinationPath, l.sourcePath, err)
 	}
