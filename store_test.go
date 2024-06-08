@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 )
 
@@ -29,7 +30,7 @@ func TestInitStore(t *testing.T) {
 
 func TestEntries(t *testing.T) {
 	t.Run("return 0 entries for a new store", func(t *testing.T) {
-		s := newTestStore(t)
+		s, _ := newTestStore(t)
 
 		entries := s.entries()
 
@@ -41,51 +42,73 @@ func TestEntries(t *testing.T) {
 
 func TestAdd(t *testing.T) {
 	t.Run("add a new link", func(t *testing.T) {
-		s := newTestStore(t)
+		s, rootPath := newTestStore(t)
 
-		l := link{
-			sourcePath:      "test",
-			destinationPath: "test",
-		}
+		e := newTestEntry(rootPath)
 
-		s.add(l)
+		err := s.add(e)
+		noErr(t, err)
 
 		entries := s.entries()
 
 		if len(entries) != 1 {
 			t.Fatalf("len(entries) = %d; want 1", len(entries))
 		}
-		if entries[0] != l {
-			t.Errorf("entries[0] = %+v; want %+v", l, entries[0])
+		if entries[0] != e {
+			t.Errorf("entries[0] = %+v; want %+v", e, entries[0])
 		}
 	})
 	t.Run("behave idempotently when adding links", func(t *testing.T) {
-		s := newTestStore(t)
+		s, rootPath := newTestStore(t)
 
-		l := link{
-			sourcePath:      "test",
-			destinationPath: "test",
-		}
+		e := newTestEntry(rootPath)
 
-		s.add(l)
-		s.add(l)
+		err := s.add(e)
+		noErr(t, err)
+
+		s.add(e)
+		noErr(t, err)
 
 		entries := s.entries()
 
 		if len(entries) != 1 {
 			t.Fatalf("len(entries) = %d; want 1", len(entries))
 		}
-		if entries[0] != l {
-			t.Errorf("entries[0] = %+v; want %+v", l, entries[0])
+		if entries[0] != e {
+			t.Errorf("entries[0] = %+v; want %+v", e, entries[0])
+		}
+	})
+	t.Run("fail when adding a link with source outside of store", func(t *testing.T) {
+		s, rootPath := newTestStore(t)
+
+		l := link{
+			sourcePath:      "/outside-store",
+			destinationPath: "",
+		}
+
+		wantErr := sourceOutsideRootError{
+			rootPath:   rootPath,
+			sourcePath: l.sourcePath,
+		}
+
+		if err := s.add(l); !errors.Is(err, wantErr) {
+			t.Errorf("s.add(%+v) = %q; want %q", l, err, wantErr)
 		}
 	})
 }
 
-func newTestStore(t *testing.T) store {
+func newTestStore(t *testing.T) (store, string) {
 	dir := t.TempDir()
 
 	s, err := initStore(dir)
 	noErr(t, err)
 
-	return s
+	return s, dir
+}
+
+func newTestEntry(dir string) link {
+	return link{
+		sourcePath:      fmt.Sprintf("%s/source-file", dir),
+		destinationPath: "",
+	}
 }
