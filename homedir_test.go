@@ -33,3 +33,39 @@ func TestCompress(t *testing.T) {
 		}
 	})
 }
+
+func TestExpand(t *testing.T) {
+	t.Run("expand '~' to full homedir", func(t *testing.T) {
+		homeDir, err := os.UserHomeDir()
+		noErr(t, err)
+
+		path := "~/testpath"
+
+		expandedPath, err := expand(path)
+		noErr(t, err)
+
+		wantPath := fmt.Sprintf("%s/testpath", homeDir)
+
+		if expandedPath != wantPath {
+			t.Errorf("expand(%q) = %q; want %q", path, expandedPath, wantPath)
+		}
+	})
+	t.Run("return original path when no '~'", func(t *testing.T) {
+		path := "/test-dir/test-file"
+
+		expandedPath, err := expand(path)
+		noErr(t, err)
+
+		if expandedPath != path {
+			t.Errorf("expand(%q) = %q; want %q", path, expandedPath, path)
+		}
+	})
+	t.Run("return input when given an empty string", func(t *testing.T) {
+		expandedPath, err := expand("")
+		noErr(t, err)
+
+		if expandedPath != "" {
+			t.Errorf("expand(\"\") = %q; want \"\"", expandedPath)
+		}
+	})
+}
