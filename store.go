@@ -43,6 +43,9 @@ func openStore(rootPath string) (s store, err error) {
 	storeFilePath := fmt.Sprintf("%s/%s", rootPath, storeFileName)
 
 	stat, err := os.Stat(storeFilePath)
+	if errors.Is(err, os.ErrNotExist) {
+		return store{}, storeNotExistError(rootPath)
+	}
 	if err != nil {
 		return store{}, fmt.Errorf("reading stat %q: %v", storeFilePath, err)
 	}
@@ -130,4 +133,10 @@ type sourceOutsideRootError struct {
 
 func (e sourceOutsideRootError) Error() string {
 	return fmt.Sprintf("source %q is outside of root %q", e.sourcePath, e.rootPath)
+}
+
+type storeNotExistError string
+
+func (e storeNotExistError) Error() string {
+	return fmt.Sprintf("store at %q does not exist", string(e))
 }

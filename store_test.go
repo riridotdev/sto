@@ -143,6 +143,15 @@ func TestOpen(t *testing.T) {
 			t.Errorf("len(entries) = %d; want 0", len(entries))
 		}
 	})
+	t.Run("fail when opening a non-existent store", func(t *testing.T) {
+		dir := t.TempDir()
+
+		wantErr := storeNotExistError(dir)
+
+		if _, err := openStore(dir); !errors.Is(err, wantErr) {
+			t.Errorf("openStore(%q) = %q; want %q", dir, err, wantErr)
+		}
+	})
 }
 
 func newTestStore(t *testing.T) (store, string) {
