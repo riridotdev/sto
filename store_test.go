@@ -39,6 +39,28 @@ func TestEntries(t *testing.T) {
 	})
 }
 
+func TestAdd(t *testing.T) {
+	t.Run("add a new link", func(t *testing.T) {
+		s := newTestStore(t)
+
+		l := link{
+			sourcePath:      "test",
+			destinationPath: "test",
+		}
+
+		s.add(l)
+
+		entries := s.entries()
+
+		if len(entries) != 1 {
+			t.Fatalf("len(entries) = %d; want 1", len(entries))
+		}
+		if entries[0] != l {
+			t.Errorf("entries[0] = %+v; want %+v", l, entries[0])
+		}
+	})
+}
+
 func newTestStore(t *testing.T) store {
 	dir := t.TempDir()
 

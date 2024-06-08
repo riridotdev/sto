@@ -8,7 +8,7 @@ import (
 
 const storeFileName = ".sto"
 
-type store struct{}
+type store []link
 
 func initStore(rootPath string) (store, error) {
 	storeFilePath := fmt.Sprintf("%s/%s", rootPath, storeFileName)
@@ -32,8 +32,12 @@ func initStore(rootPath string) (store, error) {
 	return store{}, nil
 }
 
-func (s store) entries() []link {
-	return nil
+func (s *store) entries() []link {
+	return *s
+}
+
+func (s *store) add(l link) {
+	*s = append(*s, l)
 }
 
 type storeAlreadyExistsError string
