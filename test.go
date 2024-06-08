@@ -1,7 +1,9 @@
 package main
 
 import (
+	"crypto/rand"
 	"errors"
+	"fmt"
 	"os"
 	"testing"
 )
@@ -43,4 +45,22 @@ func removeFile(t testing.TB, path string) {
 	if err := os.Remove(path); err != nil && !errors.Is(err, os.ErrNotExist) {
 		t.Fatalf("deleting file %q: %v", path, err)
 	}
+}
+
+func randomString(length int) string {
+	s := make([]byte, length)
+
+	n, err := rand.Read(s)
+	if err != nil {
+		panic(fmt.Sprintf("creating random string"))
+	}
+	if n != length {
+		panic(fmt.Sprintf("read %d bytes; expected %d", length, n))
+	}
+
+	for i := range s {
+		s[i] = s[i]%26 + 'a'
+	}
+
+	return string(s)
 }

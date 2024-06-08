@@ -78,6 +78,23 @@ func TestAdd(t *testing.T) {
 			t.Errorf("entries[0] = %+v; want %+v", e, entries[0])
 		}
 	})
+	t.Run("add multiple entries", func(t *testing.T) {
+		s, rootPath := newTestStore(t)
+
+		e := newTestEntry(rootPath)
+		err := s.add(e)
+		noErr(t, err)
+
+		e2 := newTestEntry(rootPath)
+		err = s.add(e2)
+		noErr(t, err)
+
+		entries := s.entries()
+
+		if len(entries) != 2 {
+			t.Fatalf("len(entries) = %d; want 2", len(entries))
+		}
+	})
 	t.Run("fail when adding a link with source outside of store", func(t *testing.T) {
 		s, rootPath := newTestStore(t)
 
@@ -108,7 +125,7 @@ func newTestStore(t *testing.T) (store, string) {
 
 func newTestEntry(dir string) link {
 	return link{
-		sourcePath:      fmt.Sprintf("%s/source-file", dir),
+		sourcePath:      fmt.Sprintf("%s/source-file-%s", dir, randomString(8)),
 		destinationPath: "",
 	}
 }
