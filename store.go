@@ -32,6 +32,10 @@ func initStore(rootPath string) (store, error) {
 	return store{}, nil
 }
 
+func (s store) entries() []link {
+	return nil
+}
+
 type storeAlreadyExistsError string
 
 func (e storeAlreadyExistsError) Error() string {

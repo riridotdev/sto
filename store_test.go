@@ -26,3 +26,24 @@ func TestInitStore(t *testing.T) {
 		}
 	})
 }
+
+func TestEntries(t *testing.T) {
+	t.Run("return 0 entries for a new store", func(t *testing.T) {
+		s := newTestStore(t)
+
+		entries := s.entries()
+
+		if len(entries) != 0 {
+			t.Errorf("len(entries) = %d; want 0", len(entries))
+		}
+	})
+}
+
+func newTestStore(t *testing.T) store {
+	dir := t.TempDir()
+
+	s, err := initStore(dir)
+	noErr(t, err)
+
+	return s
+}
