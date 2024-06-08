@@ -22,4 +22,14 @@ func TestCompress(t *testing.T) {
 			t.Errorf("compress(%q) = %q; want %q", path, compressedPath, wantPath)
 		}
 	})
+	t.Run("return original path when no homedir segment", func(t *testing.T) {
+		path := "/test-dir/test-file"
+
+		compressedPath, err := compress(path)
+		noErr(t, err)
+
+		if compressedPath != path {
+			t.Errorf("compress(%q) = %q; want %q", path, compressedPath, path)
+		}
+	})
 }
