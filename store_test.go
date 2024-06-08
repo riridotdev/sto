@@ -33,7 +33,8 @@ func TestEntries(t *testing.T) {
 	t.Run("return 0 entries for a new store", func(t *testing.T) {
 		s, _ := newTestStore(t)
 
-		entries := s.entries()
+		entries, err := s.entries()
+		noErr(t, err)
 
 		if len(entries) != 0 {
 			t.Errorf("len(entries) = %d; want 0", len(entries))
@@ -50,7 +51,8 @@ func TestAdd(t *testing.T) {
 		err := s.add(e)
 		noErr(t, err)
 
-		entries := s.entries()
+		entries, err := s.entries()
+		noErr(t, err)
 
 		if len(entries) != 1 {
 			t.Fatalf("len(entries) = %d; want 1", len(entries))
@@ -70,7 +72,8 @@ func TestAdd(t *testing.T) {
 		s.add(e)
 		noErr(t, err)
 
-		entries := s.entries()
+		entries, err := s.entries()
+		noErr(t, err)
 
 		if len(entries) != 1 {
 			t.Fatalf("len(entries) = %d; want 1", len(entries))
@@ -90,7 +93,8 @@ func TestAdd(t *testing.T) {
 		err = s.add(e2)
 		noErr(t, err)
 
-		entries := s.entries()
+		entries, err := s.entries()
+		noErr(t, err)
 
 		if len(entries) != 2 {
 			t.Fatalf("len(entries) = %d; want 2", len(entries))
@@ -134,6 +138,28 @@ func TestAdd(t *testing.T) {
 			t.Errorf("entry.sourcePath = %q; want %q", internalEntry.destinationPath, wantPath)
 		}
 	})
+	t.Run("entries with homedir are expanded when retrieved", func(t *testing.T) {
+		s, rootPath := newTestStore(t)
+
+		homeDir, err := os.UserHomeDir()
+		noErr(t, err)
+
+		e := newTestEntry(rootPath)
+		e.destinationPath = fmt.Sprintf("%s/test-link", homeDir)
+
+		err = s.add(e)
+		noErr(t, err)
+
+		entries, err := s.entries()
+		noErr(t, err)
+
+		assert(t, len(entries) == 1)
+		externalEntry := entries[0]
+
+		if externalEntry != e {
+			t.Errorf("store.entries()[0] = %+v; want %+v", externalEntry, e)
+		}
+	})
 }
 
 func TestOpen(t *testing.T) {
@@ -147,7 +173,8 @@ func TestOpen(t *testing.T) {
 		restoredStore, err := openStore(rootPath)
 		noErr(t, err)
 
-		entries := restoredStore.entries()
+		entries, err := restoredStore.entries()
+		noErr(t, err)
 
 		if len(entries) != 1 {
 			t.Errorf("len(entries) = %d; want 1", len(entries))
@@ -159,7 +186,8 @@ func TestOpen(t *testing.T) {
 		restoredStore, err := openStore(rootPath)
 		noErr(t, err)
 
-		entries := restoredStore.entries()
+		entries, err := restoredStore.entries()
+		noErr(t, err)
 
 		if len(entries) != 0 {
 			t.Errorf("len(entries) = %d; want 0", len(entries))

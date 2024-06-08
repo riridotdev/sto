@@ -71,8 +71,19 @@ func openStore(rootPath string) (s store, err error) {
 	return s, err
 }
 
-func (s *store) entries() []link {
-	return s.Entries
+func (s *store) entries() ([]link, error) {
+	var (
+		entries []link
+		err     error
+	)
+	for _, entry := range s.Entries {
+		entry.destinationPath, err = expand(entry.destinationPath)
+		if err != nil {
+			return nil, fmt.Errorf("expanding homedir %q: %v", entry.destinationPath, err)
+		}
+		entries = append(entries, entry)
+	}
+	return entries, nil
 }
 
 func (s *store) add(l link) error {
