@@ -37,6 +37,12 @@ func (s *store) entries() []link {
 }
 
 func (s *store) add(l link) {
+	for _, entry := range *s {
+		if entry.sourcePath == l.sourcePath &&
+			entry.destinationPath == l.destinationPath {
+			return
+		}
+	}
 	*s = append(*s, l)
 }
 
