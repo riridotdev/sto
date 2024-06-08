@@ -7,8 +7,8 @@ import (
 )
 
 type link struct {
-	sourcePath      string
-	destinationPath string
+	SourcePath      string
+	DestinationPath string
 }
 
 func (l link) link() error {
@@ -21,51 +21,51 @@ func (l link) link() error {
 	case linked:
 		return nil
 	case conflictingItem:
-		return conflictingItemError(l.destinationPath)
+		return conflictingItemError(l.DestinationPath)
 	case conflictingLink:
-		return conflictingLinkError(l.destinationPath)
+		return conflictingLinkError(l.DestinationPath)
 	case sourceMissing:
-		return sourceMissingError(l.sourcePath)
+		return sourceMissingError(l.SourcePath)
 	}
 
-	if err := os.Symlink(l.sourcePath, l.destinationPath); err != nil {
-		return fmt.Errorf("creating symlink %q -> %q: %v", l.destinationPath, l.sourcePath, err)
+	if err := os.Symlink(l.SourcePath, l.DestinationPath); err != nil {
+		return fmt.Errorf("creating symlink %q -> %q: %v", l.DestinationPath, l.SourcePath, err)
 	}
 	return nil
 }
 
 func (l link) unlink() error {
-	if err := os.Remove(l.destinationPath); err != nil && !errors.Is(err, os.ErrNotExist) {
-		return fmt.Errorf("removing symlink at %q: %v", l.destinationPath, err)
+	if err := os.Remove(l.DestinationPath); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("removing symlink at %q: %v", l.DestinationPath, err)
 	}
 	return nil
 }
 
 func (l link) state() (linkState, error) {
-	_, err := os.Stat(l.sourcePath)
+	_, err := os.Stat(l.SourcePath)
 	if errors.Is(err, os.ErrNotExist) {
 		return sourceMissing, nil
 	}
 	if err != nil {
-		return unknown, fmt.Errorf("reading stat %q: %v", l.sourcePath, err)
+		return unknown, fmt.Errorf("reading stat %q: %v", l.SourcePath, err)
 	}
 
-	state, err := os.Lstat(l.destinationPath)
+	state, err := os.Lstat(l.DestinationPath)
 	if errors.Is(err, os.ErrNotExist) {
 		return unlinked, nil
 	}
 	if err != nil {
-		return unknown, fmt.Errorf("reading stat %q: %v", l.destinationPath, err)
+		return unknown, fmt.Errorf("reading stat %q: %v", l.DestinationPath, err)
 	}
 	if state.Mode()&os.ModeSymlink != os.ModeSymlink {
 		return conflictingItem, nil
 	}
 
-	resolvedPath, err := os.Readlink(l.destinationPath)
+	resolvedPath, err := os.Readlink(l.DestinationPath)
 	if err != nil {
-		return unknown, fmt.Errorf("resolving link %q: %v", l.destinationPath, err)
+		return unknown, fmt.Errorf("resolving link %q: %v", l.DestinationPath, err)
 	}
-	if resolvedPath != l.sourcePath {
+	if resolvedPath != l.SourcePath {
 		return conflictingLink, nil
 	}
 

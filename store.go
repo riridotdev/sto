@@ -77,9 +77,9 @@ func (s *store) entries() ([]link, error) {
 		err     error
 	)
 	for _, entry := range s.Entries {
-		entry.destinationPath, err = expand(entry.destinationPath)
+		entry.DestinationPath, err = expand(entry.DestinationPath)
 		if err != nil {
-			return nil, fmt.Errorf("expanding homedir %q: %v", entry.destinationPath, err)
+			return nil, fmt.Errorf("expanding homedir %q: %v", entry.DestinationPath, err)
 		}
 		entries = append(entries, entry)
 	}
@@ -87,22 +87,22 @@ func (s *store) entries() ([]link, error) {
 }
 
 func (s *store) add(l link) error {
-	if !strings.HasPrefix(l.sourcePath, s.rootPath) {
+	if !strings.HasPrefix(l.SourcePath, s.rootPath) {
 		return sourceOutsideRootError{
 			rootPath:   s.rootPath,
-			sourcePath: l.sourcePath,
+			sourcePath: l.SourcePath,
 		}
 	}
 
 	var err error
-	l.destinationPath, err = compress(l.destinationPath)
+	l.DestinationPath, err = compress(l.DestinationPath)
 	if err != nil {
-		return fmt.Errorf("compressing path %q: %v", l.destinationPath, err)
+		return fmt.Errorf("compressing path %q: %v", l.DestinationPath, err)
 	}
 
 	for _, entry := range s.Entries {
-		if entry.sourcePath == l.sourcePath &&
-			entry.destinationPath == l.destinationPath {
+		if entry.SourcePath == l.SourcePath &&
+			entry.DestinationPath == l.DestinationPath {
 			return nil
 		}
 	}

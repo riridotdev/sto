@@ -104,13 +104,13 @@ func TestAdd(t *testing.T) {
 		s, rootPath := newTestStore(t)
 
 		l := link{
-			sourcePath:      "/outside-store",
-			destinationPath: "",
+			SourcePath:      "/outside-store",
+			DestinationPath: "",
 		}
 
 		wantErr := sourceOutsideRootError{
 			rootPath:   rootPath,
-			sourcePath: l.sourcePath,
+			sourcePath: l.SourcePath,
 		}
 
 		if err := s.add(l); !errors.Is(err, wantErr) {
@@ -124,7 +124,7 @@ func TestAdd(t *testing.T) {
 		noErr(t, err)
 
 		e := newTestEntry(rootPath)
-		e.destinationPath = fmt.Sprintf("%s/test-link", homeDir)
+		e.DestinationPath = fmt.Sprintf("%s/test-link", homeDir)
 
 		err = s.add(e)
 		noErr(t, err)
@@ -134,8 +134,8 @@ func TestAdd(t *testing.T) {
 
 		wantPath := "~/test-link"
 
-		if internalEntry.destinationPath != wantPath {
-			t.Errorf("entry.sourcePath = %q; want %q", internalEntry.destinationPath, wantPath)
+		if internalEntry.DestinationPath != wantPath {
+			t.Errorf("entry.destinationPath = %q; want %q", internalEntry.DestinationPath, wantPath)
 		}
 	})
 	t.Run("entries with homedir are expanded when retrieved", func(t *testing.T) {
@@ -145,7 +145,7 @@ func TestAdd(t *testing.T) {
 		noErr(t, err)
 
 		e := newTestEntry(rootPath)
-		e.destinationPath = fmt.Sprintf("%s/test-link", homeDir)
+		e.DestinationPath = fmt.Sprintf("%s/test-link", homeDir)
 
 		err = s.add(e)
 		noErr(t, err)
@@ -193,6 +193,26 @@ func TestOpen(t *testing.T) {
 			t.Errorf("len(entries) = %d; want 0", len(entries))
 		}
 	})
+	t.Run("restore entries with correct state", func(t *testing.T) {
+		s, rootPath := newTestStore(t)
+
+		e := newTestEntry(rootPath)
+		err := s.add(e)
+		noErr(t, err)
+
+		restoredStore, err := openStore(rootPath)
+		noErr(t, err)
+
+		entries, err := restoredStore.entries()
+		noErr(t, err)
+
+		assert(t, len(entries) == 1)
+		restoredEntry := entries[0]
+
+		if restoredEntry != e {
+			t.Errorf("store.entries()[0] = %+v; want %+v", restoredEntry, e)
+		}
+	})
 	t.Run("fail when opening a non-existent store", func(t *testing.T) {
 		dir := t.TempDir()
 
@@ -215,7 +235,7 @@ func newTestStore(t *testing.T) (store, string) {
 
 func newTestEntry(dir string) link {
 	return link{
-		sourcePath:      fmt.Sprintf("%s/source-file-%s", dir, randomString(8)),
-		destinationPath: "",
+		SourcePath:      fmt.Sprintf("%s/source-file-%s", dir, randomString(8)),
+		DestinationPath: "",
 	}
 }

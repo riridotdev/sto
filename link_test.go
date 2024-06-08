@@ -14,11 +14,11 @@ func TestLink(t *testing.T) {
 		err := l.link()
 		noErr(t, err)
 
-		resolvedPath, err := os.Readlink(l.destinationPath)
+		resolvedPath, err := os.Readlink(l.DestinationPath)
 		noErr(t, err)
 
-		if resolvedPath != l.sourcePath {
-			t.Errorf("os.Readlink(%q) = %q, _; want %q, _", l.destinationPath, resolvedPath, l.sourcePath)
+		if resolvedPath != l.SourcePath {
+			t.Errorf("os.Readlink(%q) = %q, _; want %q, _", l.DestinationPath, resolvedPath, l.SourcePath)
 		}
 	})
 	t.Run("behave idempotently when linking", func(t *testing.T) {
@@ -38,9 +38,9 @@ func TestLink(t *testing.T) {
 		noErr(t, err)
 
 		conflictingLink := newTestLink(t)
-		conflictingLink.destinationPath = l.destinationPath
+		conflictingLink.DestinationPath = l.DestinationPath
 
-		wantErr := conflictingLinkError(l.destinationPath)
+		wantErr := conflictingLinkError(l.DestinationPath)
 
 		if err := conflictingLink.link(); err != wantErr {
 			t.Errorf("link.link = %q; want %q", err, wantErr)
@@ -49,12 +49,12 @@ func TestLink(t *testing.T) {
 	t.Run("fail when file exists at destination", func(t *testing.T) {
 		l := newTestLink(t)
 
-		f, err := os.Create(l.destinationPath)
+		f, err := os.Create(l.DestinationPath)
 		noErr(t, err)
 		f.Close()
-		defer os.Remove(l.destinationPath)
+		defer os.Remove(l.DestinationPath)
 
-		wantErr := conflictingItemError(l.destinationPath)
+		wantErr := conflictingItemError(l.DestinationPath)
 
 		if err := l.link(); err != wantErr {
 			t.Errorf("link.link = %q; want %q", err, wantErr)
@@ -62,9 +62,9 @@ func TestLink(t *testing.T) {
 	})
 	t.Run("fail when source file does not exist", func(t *testing.T) {
 		l := newTestLink(t)
-		removeFile(t, l.sourcePath)
+		removeFile(t, l.SourcePath)
 
-		wantErr := sourceMissingError(l.sourcePath)
+		wantErr := sourceMissingError(l.SourcePath)
 
 		if err := l.link(); !errors.Is(err, wantErr) {
 			t.Errorf("link.link = %q; want %q", err, wantErr)
@@ -82,10 +82,10 @@ func TestUnlink(t *testing.T) {
 		err = l.unlink()
 		noErr(t, err)
 
-		_, err = os.Readlink(l.destinationPath)
+		_, err = os.Readlink(l.DestinationPath)
 
 		if !errors.Is(err, os.ErrNotExist) {
-			t.Errorf("os.ReadLink(%q) = _, %q; want _, %q", l.destinationPath, err, os.ErrNotExist)
+			t.Errorf("os.ReadLink(%q) = _, %q; want _, %q", l.DestinationPath, err, os.ErrNotExist)
 		}
 	})
 	t.Run("behave idempotently when unlinking", func(t *testing.T) {
@@ -134,7 +134,7 @@ func TestState(t *testing.T) {
 		noErr(t, err)
 
 		l := newTestLink(t)
-		l.destinationPath = conflictLink.destinationPath
+		l.DestinationPath = conflictLink.DestinationPath
 
 		state, err := l.state()
 		noErr(t, err)
@@ -146,10 +146,10 @@ func TestState(t *testing.T) {
 	t.Run("returns conflict when a file exists at the destination", func(t *testing.T) {
 		l := newTestLink(t)
 
-		f, err := os.Create(l.destinationPath)
+		f, err := os.Create(l.DestinationPath)
 		noErr(t, err)
 		f.Close()
-		defer removeFile(t, l.destinationPath)
+		defer removeFile(t, l.DestinationPath)
 
 		state, err := l.state()
 		noErr(t, err)
@@ -160,7 +160,7 @@ func TestState(t *testing.T) {
 	})
 	t.Run("return broken when source file is missing", func(t *testing.T) {
 		l := newTestLink(t)
-		removeFile(t, l.sourcePath)
+		removeFile(t, l.SourcePath)
 
 		state, err := l.state()
 		noErr(t, err)
@@ -180,8 +180,8 @@ func newTestLink(t *testing.T) link {
 	destinationPath := fmt.Sprintf("%s/test-link", dir)
 
 	l := link{
-		sourcePath:      sourcePath,
-		destinationPath: destinationPath,
+		SourcePath:      sourcePath,
+		DestinationPath: destinationPath,
 	}
 
 	t.Cleanup(func() {
@@ -191,7 +191,7 @@ func newTestLink(t *testing.T) link {
 	})
 
 	return link{
-		sourcePath:      sourcePath,
-		destinationPath: destinationPath,
+		SourcePath:      sourcePath,
+		DestinationPath: destinationPath,
 	}
 }
