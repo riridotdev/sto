@@ -131,6 +131,18 @@ func TestOpen(t *testing.T) {
 			t.Errorf("len(entries) = %d; want 1", len(entries))
 		}
 	})
+	t.Run("restore an empty store", func(t *testing.T) {
+		_, rootPath := newTestStore(t)
+
+		restoredStore, err := openStore(rootPath)
+		noErr(t, err)
+
+		entries := restoredStore.entries()
+
+		if len(entries) != 0 {
+			t.Errorf("len(entries) = %d; want 0", len(entries))
+		}
+	})
 }
 
 func newTestStore(t *testing.T) (store, string) {

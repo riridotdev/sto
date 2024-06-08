@@ -38,7 +38,17 @@ func initStore(rootPath string) (store, error) {
 }
 
 func openStore(rootPath string) (s store, err error) {
+	s.rootPath = rootPath
+
 	storeFilePath := fmt.Sprintf("%s/%s", rootPath, storeFileName)
+
+	stat, err := os.Stat(storeFilePath)
+	if err != nil {
+		return store{}, fmt.Errorf("reading stat %q: %v", storeFilePath, err)
+	}
+	if stat.Size() == 0 {
+		return s, err
+	}
 
 	f, err := os.Open(storeFilePath)
 	if err != nil {
