@@ -40,7 +40,7 @@ func TestLink(t *testing.T) {
 		conflictingLink := newTestLink(t)
 		conflictingLink.destinationPath = l.destinationPath
 
-		wantErr := conflictingLinkError(l)
+		wantErr := conflictingLinkError(l.destinationPath)
 
 		if err := conflictingLink.link(); err != wantErr {
 			t.Errorf("link.link = %q; want %q", err, wantErr)
@@ -118,19 +118,19 @@ func TestState(t *testing.T) {
 		}
 	})
 	t.Run("returns conflict when another link exists at the destination", func(t *testing.T) {
-		conflictingLink := newTestLink(t)
+		conflictLink := newTestLink(t)
 
-		err := conflictingLink.link()
+		err := conflictLink.link()
 		noErr(t, err)
 
 		l := newTestLink(t)
-		l.destinationPath = conflictingLink.destinationPath
+		l.destinationPath = conflictLink.destinationPath
 
 		state, err := l.state()
 		noErr(t, err)
 
-		if state != conflict {
-			t.Errorf("link.state() = %s; want %s", state, conflict)
+		if state != conflictingLink {
+			t.Errorf("link.state() = %s; want %s", state, conflictingLink)
 		}
 	})
 	t.Run("returns conflict when a file exists at the destination", func(t *testing.T) {
@@ -144,8 +144,8 @@ func TestState(t *testing.T) {
 		state, err := l.state()
 		noErr(t, err)
 
-		if state != conflict {
-			t.Errorf("link.state() = %s; want %s", state, conflict)
+		if state != conflictingItem {
+			t.Errorf("link.state() = %s; want %s", state, conflictingItem)
 		}
 	})
 	t.Run("return broken when source file is missing", func(t *testing.T) {
