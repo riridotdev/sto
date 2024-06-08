@@ -60,6 +60,16 @@ func TestLink(t *testing.T) {
 			t.Errorf("link.link = %q; want %q", err, wantErr)
 		}
 	})
+	t.Run("fail when source file does not exist", func(t *testing.T) {
+		l := newTestLink(t)
+		removeFile(t, l.sourcePath)
+
+		wantErr := brokenLinkError(l)
+
+		if err := l.link(); !errors.Is(err, wantErr) {
+			t.Errorf("link.link = %q; want %q", err, wantErr)
+		}
+	})
 }
 
 func TestUnlink(t *testing.T) {

@@ -24,6 +24,8 @@ func (l link) link() error {
 		return conflictingItemError(l.destinationPath)
 	case conflictingLink:
 		return conflictingLinkError(l.destinationPath)
+	case broken:
+		return brokenLinkError(l)
 	}
 
 	if err := os.Symlink(l.sourcePath, l.destinationPath); err != nil {
@@ -111,4 +113,10 @@ type conflictingItemError string
 
 func (e conflictingItemError) Error() string {
 	return fmt.Sprintf("conflicting item at %q", string(e))
+}
+
+type brokenLinkError link
+
+func (e brokenLinkError) Error() string {
+	return fmt.Sprintf("link %q -> %q is broken", e.destinationPath, e.sourcePath)
 }
