@@ -15,6 +15,13 @@ func noErr(t testing.TB, err error) {
 	}
 }
 
+func assert(t testing.TB, b bool) {
+	t.Helper()
+	if !b {
+		t.Fatalf("failed assertion")
+	}
+}
+
 func newTestFile(t testing.TB, dir string) string {
 	t.Helper()
 

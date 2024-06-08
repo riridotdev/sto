@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"os"
 	"testing"
 )
 
@@ -110,6 +111,27 @@ func TestAdd(t *testing.T) {
 
 		if err := s.add(l); !errors.Is(err, wantErr) {
 			t.Errorf("s.add(%+v) = %q; want %q", l, err, wantErr)
+		}
+	})
+	t.Run("store homedir for path internally as '~'", func(t *testing.T) {
+		s, rootPath := newTestStore(t)
+
+		homeDir, err := os.UserHomeDir()
+		noErr(t, err)
+
+		e := newTestEntry(rootPath)
+		e.destinationPath = fmt.Sprintf("%s/test-link", homeDir)
+
+		err = s.add(e)
+		noErr(t, err)
+
+		assert(t, len(s.Entries) == 1)
+		internalEntry := s.Entries[0]
+
+		wantPath := "~/test-link"
+
+		if internalEntry.destinationPath != wantPath {
+			t.Errorf("entry.sourcePath = %q; want %q", internalEntry.destinationPath, wantPath)
 		}
 	})
 }

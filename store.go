@@ -83,6 +83,12 @@ func (s *store) add(l link) error {
 		}
 	}
 
+	var err error
+	l.destinationPath, err = compress(l.destinationPath)
+	if err != nil {
+		return fmt.Errorf("compressing path %q: %v", l.destinationPath, err)
+	}
+
 	for _, entry := range s.Entries {
 		if entry.sourcePath == l.sourcePath &&
 			entry.destinationPath == l.destinationPath {
