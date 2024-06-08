@@ -24,8 +24,8 @@ func (l link) link() error {
 		return conflictingItemError(l.destinationPath)
 	case conflictingLink:
 		return conflictingLinkError(l.destinationPath)
-	case broken:
-		return brokenLinkError(l)
+	case sourceMissing:
+		return sourceMissingError(l.sourcePath)
 	}
 
 	if err := os.Symlink(l.sourcePath, l.destinationPath); err != nil {
@@ -44,7 +44,7 @@ func (l link) unlink() error {
 func (l link) state() (linkState, error) {
 	_, err := os.Stat(l.sourcePath)
 	if errors.Is(err, os.ErrNotExist) {
-		return broken, nil
+		return sourceMissing, nil
 	}
 	if err != nil {
 		return unknown, fmt.Errorf("reading stat %q: %v", l.sourcePath, err)
@@ -80,7 +80,7 @@ const (
 	unlinked
 	conflictingItem
 	conflictingLink
-	broken
+	sourceMissing
 	unknown
 )
 
@@ -94,8 +94,8 @@ func (ls linkState) String() string {
 		return "conflictingItem"
 	case conflictingLink:
 		return "conflictingLink"
-	case broken:
-		return "broken"
+	case sourceMissing:
+		return "sourceMissing"
 	case unknown:
 		return "unknown"
 	default:
@@ -115,8 +115,8 @@ func (e conflictingItemError) Error() string {
 	return fmt.Sprintf("conflicting item at %q", string(e))
 }
 
-type brokenLinkError link
+type sourceMissingError string
 
-func (e brokenLinkError) Error() string {
-	return fmt.Sprintf("link %q -> %q is broken", e.destinationPath, e.sourcePath)
+func (e sourceMissingError) Error() string {
+	return fmt.Sprintf("source %q is missing", string(e))
 }

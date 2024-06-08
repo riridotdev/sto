@@ -64,7 +64,7 @@ func TestLink(t *testing.T) {
 		l := newTestLink(t)
 		removeFile(t, l.sourcePath)
 
-		wantErr := brokenLinkError(l)
+		wantErr := sourceMissingError(l.sourcePath)
 
 		if err := l.link(); !errors.Is(err, wantErr) {
 			t.Errorf("link.link = %q; want %q", err, wantErr)
@@ -165,8 +165,8 @@ func TestState(t *testing.T) {
 		state, err := l.state()
 		noErr(t, err)
 
-		if state != broken {
-			t.Errorf("link.state() = %s; want %s", state, broken)
+		if state != sourceMissing {
+			t.Errorf("link.state() = %s; want %s", state, sourceMissing)
 		}
 	})
 }
