@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"os"
 	"testing"
 )
@@ -28,7 +29,7 @@ func newTestFile(t testing.TB, dir string) string {
 	filePath := file.Name()
 
 	t.Cleanup(func() {
-		if err := os.Remove(filePath); err != nil {
+		if err := os.Remove(filePath); err != nil && !errors.Is(err, os.ErrNotExist) {
 			t.Fatalf("cleaning up: removing file %q: %v", filePath, err)
 		}
 	})
@@ -39,7 +40,7 @@ func newTestFile(t testing.TB, dir string) string {
 func removeFile(t testing.TB, path string) {
 	t.Helper()
 
-	if err := os.Remove(path); err != nil {
+	if err := os.Remove(path); err != nil && !errors.Is(err, os.ErrNotExist) {
 		t.Fatalf("deleting file %q: %v", path, err)
 	}
 }

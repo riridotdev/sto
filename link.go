@@ -47,6 +47,14 @@ func (l link) unlink() error {
 }
 
 func (l link) state() (linkState, error) {
+	_, err := os.Stat(l.sourcePath)
+	if errors.Is(err, os.ErrNotExist) {
+		return broken, nil
+	}
+	if err != nil {
+		return unknown, fmt.Errorf("reading stat %q: %v", l.sourcePath, err)
+	}
+
 	state, err := os.Lstat(l.destinationPath)
 	if errors.Is(err, os.ErrNotExist) {
 		return unlinked, nil
@@ -76,6 +84,7 @@ const (
 	linked
 	unlinked
 	conflict
+	broken
 	unknown
 )
 
@@ -87,6 +96,8 @@ func (ls linkState) String() string {
 		return "unlinked"
 	case conflict:
 		return "conflict"
+	case broken:
+		return "broken"
 	case unknown:
 		return "unknown"
 	default:

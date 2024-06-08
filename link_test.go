@@ -148,6 +148,17 @@ func TestState(t *testing.T) {
 			t.Errorf("link.state() = %s; want %s", state, conflict)
 		}
 	})
+	t.Run("return broken when source file is missing", func(t *testing.T) {
+		l := newTestLink(t)
+		removeFile(t, l.sourcePath)
+
+		state, err := l.state()
+		noErr(t, err)
+
+		if state != broken {
+			t.Errorf("link.state() = %s; want %s", state, broken)
+		}
+	})
 }
 
 func newTestLink(t *testing.T) link {
