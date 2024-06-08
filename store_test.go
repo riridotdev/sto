@@ -114,6 +114,25 @@ func TestAdd(t *testing.T) {
 	})
 }
 
+func TestOpen(t *testing.T) {
+	t.Run("restore the state of an existing store", func(t *testing.T) {
+		s, rootPath := newTestStore(t)
+
+		e := newTestEntry(rootPath)
+		err := s.add(e)
+		noErr(t, err)
+
+		restoredStore, err := openStore(rootPath)
+		noErr(t, err)
+
+		entries := restoredStore.entries()
+
+		if len(entries) != 1 {
+			t.Errorf("len(entries) = %d; want 1", len(entries))
+		}
+	})
+}
+
 func newTestStore(t *testing.T) (store, string) {
 	dir := t.TempDir()
 

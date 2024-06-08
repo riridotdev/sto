@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -10,8 +11,8 @@ import (
 const storeFileName = ".sto"
 
 type store struct {
-	rootPath     string
-	storeEntries []link
+	rootPath string
+	Entries  []link
 }
 
 func initStore(rootPath string) (store, error) {
@@ -36,8 +37,29 @@ func initStore(rootPath string) (store, error) {
 	return store{rootPath: rootPath}, nil
 }
 
+func openStore(rootPath string) (s store, err error) {
+	storeFilePath := fmt.Sprintf("%s/%s", rootPath, storeFileName)
+
+	f, err := os.Open(storeFilePath)
+	if err != nil {
+		return store{}, fmt.Errorf("opening store file %q: %v", storeFilePath, err)
+	}
+	defer func() {
+		if closeErr := f.Close(); closeErr != nil {
+			err = fmt.Errorf("closing store file %q: %v", storeFilePath, closeErr)
+		}
+	}()
+
+	dec := json.NewDecoder(f)
+	if err := dec.Decode(&s); err != nil {
+		return store{}, fmt.Errorf("reading store file %q: %v", storeFilePath, err)
+	}
+
+	return s, err
+}
+
 func (s *store) entries() []link {
-	return s.storeEntries
+	return s.Entries
 }
 
 func (s *store) add(l link) error {
@@ -47,14 +69,42 @@ func (s *store) add(l link) error {
 			sourcePath: l.sourcePath,
 		}
 	}
-	for _, entry := range s.storeEntries {
+
+	for _, entry := range s.Entries {
 		if entry.sourcePath == l.sourcePath &&
 			entry.destinationPath == l.destinationPath {
 			return nil
 		}
 	}
-	s.storeEntries = append(s.storeEntries, l)
+
+	s.Entries = append(s.Entries, l)
+
+	if err := s.persist(); err != nil {
+		return fmt.Errorf("persisting store: %v", err)
+	}
+
 	return nil
+}
+
+func (s *store) persist() (err error) {
+	storeFilePath := fmt.Sprintf("%s/%s", s.rootPath, storeFileName)
+
+	f, err := os.OpenFile(storeFilePath, os.O_TRUNC|os.O_WRONLY, 0644)
+	if err != nil {
+		return fmt.Errorf("opening store file %q: %v", storeFilePath, err)
+	}
+	defer func() {
+		if closeErr := f.Close(); closeErr != nil {
+			err = fmt.Errorf("closing store file %q: %v", storeFilePath, closeErr)
+		}
+	}()
+
+	enc := json.NewEncoder(f)
+	if err := enc.Encode(s); err != nil {
+		return fmt.Errorf("writing to store file %q: %v", storeFilePath, err)
+	}
+
+	return err
 }
 
 type storeAlreadyExistsError string
