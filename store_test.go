@@ -368,6 +368,30 @@ func TestUpdate(t *testing.T) {
 			t.Errorf("store.get(%q) = %+v, _, _; want %+v, _, _", e.Name, retrievedEntry, e)
 		}
 	})
+	t.Run("remove the original entry", func(t *testing.T) {
+		s, rootPath := newTestStore(t)
+
+		e := newTestEntry(rootPath)
+
+		err := s.add(e)
+		noErr(t, err)
+
+		oldName := e.Name
+
+		e.Name = "new-name"
+		e.SourcePath = fmt.Sprintf("%s/new-source", rootPath)
+		e.DestinationPath = "/new-path"
+
+		err = s.update(oldName, e)
+		noErr(t, err)
+
+		_, ok, err := s.get(oldName)
+		noErr(t, err)
+
+		if ok {
+			t.Errorf("store.get(%q) = _, true, _; want _, false, _", oldName)
+		}
+	})
 }
 
 func newTestStore(t *testing.T) (store, string) {

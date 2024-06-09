@@ -142,10 +142,11 @@ func (s *store) get(name string) (link, bool, error) {
 	if err != nil {
 		return link{}, false, fmt.Errorf("converting internal entry %+v: %v", entry, err)
 	}
-	return externalEntry, false, nil
+	return externalEntry, true, nil
 }
 
 func (s *store) update(name string, l link) error {
+	delete(s.Entries, name)
 	return s.add(l)
 }
 
