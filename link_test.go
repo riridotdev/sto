@@ -123,6 +123,23 @@ func TestUnlink(t *testing.T) {
 			)
 		}
 	})
+	t.Run("leave conflicting file untouched", func(t *testing.T) {
+		l := newTestLink(t)
+
+		f, err := os.Create(l.DestinationPath)
+		noErr(t, err)
+		f.Close()
+		defer func() {
+			noErr(t, os.Remove(l.DestinationPath))
+		}()
+
+		err = l.unlink()
+		noErr(t, err)
+
+		if _, err := os.Stat(l.DestinationPath); err != nil {
+			t.Errorf("os.Stat(%q) = %q; want nil", l.DestinationPath, err)
+		}
+	})
 }
 
 func TestState(t *testing.T) {
