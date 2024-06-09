@@ -309,6 +309,13 @@ func TestGet(t *testing.T) {
 			t.Errorf("store.get(%q) = %+v; want %+v", e.Name, retrievedEntry, e)
 		}
 	})
+	t.Run("return not ok for a missing entry", func(t *testing.T) {
+		s, _ := newTestStore(t)
+
+		if _, ok, _ := s.get("missing"); ok {
+			t.Error("store.get(\"missing\") = true; want false")
+		}
+	})
 }
 
 func newTestStore(t *testing.T) (store, string) {
