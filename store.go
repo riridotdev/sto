@@ -16,9 +16,17 @@ type store struct {
 }
 
 func initStore(rootPath string) (store, error) {
+	stat, err := os.Stat(rootPath)
+	if err != nil {
+		return store{}, fmt.Errorf("reading stat %q: %v", rootPath, err)
+	}
+	if !stat.IsDir() {
+		return store{}, notDirectoryError(rootPath)
+	}
+
 	storeFilePath := fmt.Sprintf("%s/%s", rootPath, storeFileName)
 
-	_, err := os.Stat(storeFilePath)
+	_, err = os.Stat(storeFilePath)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return store{}, fmt.Errorf("reading stat %q: %v", storeFilePath, err)
 	}
@@ -135,6 +143,12 @@ func (s *store) persist() (err error) {
 	}
 
 	return err
+}
+
+type notDirectoryError string
+
+func (e notDirectoryError) Error() string {
+	return fmt.Sprintf("%q is not a directory", string(e))
 }
 
 type storeAlreadyExistsError string

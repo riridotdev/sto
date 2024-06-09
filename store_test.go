@@ -27,6 +27,15 @@ func TestInitStore(t *testing.T) {
 			t.Errorf("initStore(%q) = _, %q; want _, %q", dir, err, wantErr)
 		}
 	})
+	t.Run("fail when target path not a directory", func(t *testing.T) {
+		rootPath := newTestFile(t, "")
+
+		wantErr := notDirectoryError(rootPath)
+
+		if _, err := initStore(rootPath); !errors.Is(err, wantErr) {
+			t.Errorf("initStore(%q) = _, %q; want _, %q", rootPath, err, wantErr)
+		}
+	})
 }
 
 func TestEntries(t *testing.T) {
