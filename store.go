@@ -106,6 +106,10 @@ func (s *store) add(l link) error {
 		return fmt.Errorf("converting external entry %+v: %v", l, err)
 	}
 
+	if internalEntry.Name == "" {
+		internalEntry.Name = internalEntry.SourcePath
+	}
+
 	for _, entry := range s.Entries {
 		if entry.SourcePath == internalEntry.SourcePath &&
 			entry.DestinationPath == internalEntry.DestinationPath {

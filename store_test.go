@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -107,6 +108,25 @@ func TestAdd(t *testing.T) {
 
 		if len(entries) != 2 {
 			t.Fatalf("len(entries) = %d; want 2", len(entries))
+		}
+	})
+	t.Run("use relative path as default name", func(t *testing.T) {
+		s, rootPath := newTestStore(t)
+
+		e := newTestEntry(rootPath)
+		e.Name = ""
+
+		err := s.add(e)
+		noErr(t, err)
+
+		fileName := strings.TrimPrefix(e.SourcePath, fmt.Sprintf("%s/", rootPath))
+		e.Name = fileName
+
+		retrievedEntry, _, err := s.get(fileName)
+		noErr(t, err)
+
+		if retrievedEntry != e {
+			t.Errorf("store.get(%q) = %+v; want %+v", fileName, retrievedEntry, e)
 		}
 	})
 	t.Run("fail when adding a link with source outside of store", func(t *testing.T) {
@@ -280,8 +300,10 @@ func newTestStore(t *testing.T) (store, string) {
 }
 
 func newTestEntry(dir string) link {
+	fileName := fmt.Sprintf("source-file-%s", randomString(8))
 	return link{
-		SourcePath:      fmt.Sprintf("%s/source-file-%s", dir, randomString(8)),
+		SourcePath:      fmt.Sprintf("%s/%s", dir, fileName),
 		DestinationPath: "",
+		Name:            fileName,
 	}
 }
