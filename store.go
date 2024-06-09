@@ -129,6 +129,19 @@ func (s *store) add(l link) error {
 	return nil
 }
 
+func (s *store) get(name string) (link, bool, error) {
+	for _, entry := range s.Entries {
+		externalEntry, err := fromInternalEntry(entry, s.rootPath)
+		if err != nil {
+			return link{}, false, fmt.Errorf("converting internal entry %+v: %v", entry, err)
+		}
+		if externalEntry.Name == name {
+			return externalEntry, true, nil
+		}
+	}
+	return link{}, false, nil
+}
+
 func (s *store) persist() (err error) {
 	storeFilePath := fmt.Sprintf("%s/%s", s.rootPath, storeFileName)
 

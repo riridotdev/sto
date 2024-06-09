@@ -4,11 +4,37 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 )
 
 type link struct {
+	Name            string
 	SourcePath      string
 	DestinationPath string
+}
+
+func fromInternalEntry(l link, rootPath string) (link, error) {
+	destinationPath, err := expand(l.DestinationPath)
+	if err != nil {
+		return link{}, fmt.Errorf("expanding dir %q: %v", l.DestinationPath, err)
+	}
+	l.DestinationPath = destinationPath
+
+	l.SourcePath = fmt.Sprintf("%s%s", rootPath, l.SourcePath)
+
+	return l, nil
+}
+
+func fromExternalEntry(l link, rootPath string) (link, error) {
+	destinationPath, err := compress(l.DestinationPath)
+	if err != nil {
+		return link{}, fmt.Errorf("compressing dir %q: %v", l.DestinationPath, err)
+	}
+	l.DestinationPath = destinationPath
+
+	l.SourcePath = strings.TrimPrefix(l.SourcePath, rootPath)
+
+	return l, nil
 }
 
 func (l link) link() error {

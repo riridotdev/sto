@@ -251,6 +251,25 @@ func TestOpen(t *testing.T) {
 	})
 }
 
+func TestGet(t *testing.T) {
+	t.Run("retrieve an entry from the store", func(t *testing.T) {
+		s, rootPath := newTestStore(t)
+
+		e := newTestEntry(rootPath)
+		e.Name = "test-entry"
+
+		err := s.add(e)
+		noErr(t, err)
+
+		retrievedEntry, _, err := s.get(e.Name)
+		noErr(t, err)
+
+		if retrievedEntry != e {
+			t.Errorf("store.get(%q) = %+v; want %+v", e.Name, retrievedEntry, e)
+		}
+	})
+}
+
 func newTestStore(t *testing.T) (store, string) {
 	dir := t.TempDir()
 
