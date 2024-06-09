@@ -42,11 +42,13 @@ func initStore(rootPath string) (store, error) {
 		return store{}, fmt.Errorf("closing store file %q: %v", storeFilePath, err)
 	}
 
+	rootPath = formatDirPath(rootPath)
+
 	return store{rootPath: rootPath}, nil
 }
 
 func openStore(rootPath string) (s store, err error) {
-	s.rootPath = rootPath
+	s.rootPath = formatDirPath(rootPath)
 
 	storeFilePath := fmt.Sprintf("%s/%s", rootPath, storeFileName)
 
@@ -85,6 +87,7 @@ func (s *store) entries() ([]link, error) {
 		err     error
 	)
 	for _, entry := range s.Entries {
+		entry.SourcePath = fmt.Sprintf("%s%s", s.rootPath, entry.SourcePath)
 		entry.DestinationPath, err = expand(entry.DestinationPath)
 		if err != nil {
 			return nil, fmt.Errorf("expanding homedir %q: %v", entry.DestinationPath, err)
@@ -107,6 +110,8 @@ func (s *store) add(l link) error {
 	if err != nil {
 		return fmt.Errorf("compressing path %q: %v", l.DestinationPath, err)
 	}
+
+	l.SourcePath = strings.TrimPrefix(l.SourcePath, s.rootPath)
 
 	for _, entry := range s.Entries {
 		if entry.SourcePath == l.SourcePath &&
@@ -145,6 +150,13 @@ func (s *store) persist() (err error) {
 	return err
 }
 
+func formatDirPath(path string) string {
+	if len(path) == 0 || path[len(path)-1] != '/' {
+		return fmt.Sprintf("%s/", path)
+	}
+	return path
+}
+
 type notDirectoryError string
 
 func (e notDirectoryError) Error() string {
@@ -163,6 +175,7 @@ type sourceOutsideRootError struct {
 }
 
 func (e sourceOutsideRootError) Error() string {
+	e.rootPath = formatDirPath(e.rootPath)
 	return fmt.Sprintf("source %q is outside of root %q", e.sourcePath, e.rootPath)
 }
 

@@ -67,7 +67,7 @@ func TestAdd(t *testing.T) {
 			t.Fatalf("len(entries) = %d; want 1", len(entries))
 		}
 		if entries[0] != e {
-			t.Errorf("entries[0] = %+v; want %+v", e, entries[0])
+			t.Errorf("entries[0] = %+v; want %+v", entries[0], e)
 		}
 	})
 	t.Run("behave idempotently when adding links", func(t *testing.T) {
@@ -122,7 +122,7 @@ func TestAdd(t *testing.T) {
 			sourcePath: l.SourcePath,
 		}
 
-		if err := s.add(l); !errors.Is(err, wantErr) {
+		if err := s.add(l); err.Error() != wantErr.Error() {
 			t.Errorf("s.add(%+v) = %q; want %q", l, err, wantErr)
 		}
 	})
@@ -167,6 +167,24 @@ func TestAdd(t *testing.T) {
 
 		if externalEntry != e {
 			t.Errorf("store.entries()[0] = %+v; want %+v", externalEntry, e)
+		}
+	})
+	t.Run("store paths internally as relative paths", func(t *testing.T) {
+		s, rootPath := newTestStore(t)
+
+		e := newTestEntry(rootPath)
+		e.SourcePath = fmt.Sprintf("%s/source-file", rootPath)
+
+		err := s.add(e)
+		noErr(t, err)
+
+		assert(t, len(s.Entries) == 1)
+		internalEntry := s.Entries[0]
+
+		wantPath := "source-file"
+
+		if internalEntry.SourcePath != wantPath {
+			t.Errorf("entry.sourcePath = %q; want %q", internalEntry.SourcePath, wantPath)
 		}
 	})
 }
