@@ -101,6 +101,28 @@ func TestUnlink(t *testing.T) {
 			t.Errorf("link.unlink() = %q; want nil", err)
 		}
 	})
+	t.Run("leave conflicting link untouched", func(t *testing.T) {
+		l := newTestLink(t)
+
+		conflictLink := newTestLink(t)
+		conflictLink.DestinationPath = l.DestinationPath
+
+		err := conflictLink.link()
+		noErr(t, err)
+
+		err = l.unlink()
+		noErr(t, err)
+
+		resolvedPath, err := os.Readlink(conflictLink.DestinationPath)
+		noErr(t, err)
+
+		if resolvedPath != conflictLink.SourcePath {
+			t.Errorf(
+				"os.Readlink(%q) = %q, _; want %q, _",
+				conflictLink.DestinationPath, resolvedPath, conflictLink.SourcePath,
+			)
+		}
+	})
 }
 
 func TestState(t *testing.T) {

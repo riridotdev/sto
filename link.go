@@ -35,6 +35,15 @@ func (l link) link() error {
 }
 
 func (l link) unlink() error {
+	state, err := l.state()
+	if err != nil {
+		return err
+	}
+
+	if state != linked {
+		return nil
+	}
+
 	if err := os.Remove(l.DestinationPath); err != nil && !errors.Is(err, os.ErrNotExist) {
 		return fmt.Errorf("removing symlink at %q: %v", l.DestinationPath, err)
 	}
