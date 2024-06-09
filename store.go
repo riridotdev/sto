@@ -82,17 +82,13 @@ func openStore(rootPath string) (s store, err error) {
 }
 
 func (s *store) entries() ([]link, error) {
-	var (
-		entries []link
-		err     error
-	)
+	var entries []link
 	for _, entry := range s.Entries {
-		entry.SourcePath = fmt.Sprintf("%s%s", s.rootPath, entry.SourcePath)
-		entry.DestinationPath, err = expand(entry.DestinationPath)
+		externalEntry, err := fromInternalEntry(entry, s.rootPath)
 		if err != nil {
-			return nil, fmt.Errorf("expanding homedir %q: %v", entry.DestinationPath, err)
+			return nil, fmt.Errorf("converting internal entry %+v: %v", entry, err)
 		}
-		entries = append(entries, entry)
+		entries = append(entries, externalEntry)
 	}
 	return entries, nil
 }
@@ -105,22 +101,19 @@ func (s *store) add(l link) error {
 		}
 	}
 
-	var err error
-	l.DestinationPath, err = compress(l.DestinationPath)
+	internalEntry, err := fromExternalEntry(l, s.rootPath)
 	if err != nil {
-		return fmt.Errorf("compressing path %q: %v", l.DestinationPath, err)
+		return fmt.Errorf("converting external entry %+v: %v", l, err)
 	}
 
-	l.SourcePath = strings.TrimPrefix(l.SourcePath, s.rootPath)
-
 	for _, entry := range s.Entries {
-		if entry.SourcePath == l.SourcePath &&
-			entry.DestinationPath == l.DestinationPath {
+		if entry.SourcePath == internalEntry.SourcePath &&
+			entry.DestinationPath == internalEntry.DestinationPath {
 			return nil
 		}
 	}
 
-	s.Entries = append(s.Entries, l)
+	s.Entries = append(s.Entries, internalEntry)
 
 	if err := s.persist(); err != nil {
 		return fmt.Errorf("persisting store: %v", err)
