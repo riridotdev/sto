@@ -12,7 +12,7 @@ const storeFileName = ".sto"
 
 type store struct {
 	rootPath string
-	Entries  []link
+	Entries  map[string]link
 }
 
 func initStore(rootPath string) (store, error) {
@@ -44,7 +44,7 @@ func initStore(rootPath string) (store, error) {
 
 	rootPath = formatDirPath(rootPath)
 
-	return store{rootPath: rootPath}, nil
+	return store{rootPath: rootPath, Entries: make(map[string]link)}, nil
 }
 
 func openStore(rootPath string) (s store, err error) {
@@ -110,14 +110,14 @@ func (s *store) add(l link) error {
 		internalEntry.Name = internalEntry.SourcePath
 	}
 
-	for _, entry := range s.Entries {
-		if entry.SourcePath == internalEntry.SourcePath &&
-			entry.DestinationPath == internalEntry.DestinationPath {
-			return nil
+	if exisitingEntry, ok := s.Entries[internalEntry.Name]; ok {
+		if exisitingEntry != internalEntry {
+			return entryExistError(internalEntry.Name)
 		}
+		return nil
 	}
 
-	s.Entries = append(s.Entries, internalEntry)
+	s.Entries[internalEntry.Name] = internalEntry
 
 	if err := s.persist(); err != nil {
 		return fmt.Errorf("persisting store: %v", err)
@@ -127,16 +127,15 @@ func (s *store) add(l link) error {
 }
 
 func (s *store) get(name string) (link, bool, error) {
-	for _, entry := range s.Entries {
-		externalEntry, err := fromInternalEntry(entry, s.rootPath)
-		if err != nil {
-			return link{}, false, fmt.Errorf("converting internal entry %+v: %v", entry, err)
-		}
-		if externalEntry.Name == name {
-			return externalEntry, true, nil
-		}
+	entry, ok := s.Entries[name]
+	if !ok {
+		return link{}, false, nil
 	}
-	return link{}, false, nil
+	externalEntry, err := fromInternalEntry(entry, s.rootPath)
+	if err != nil {
+		return link{}, false, fmt.Errorf("converting internal entry %+v: %v", entry, err)
+	}
+	return externalEntry, false, nil
 }
 
 func (s *store) persist() (err error) {
@@ -193,4 +192,10 @@ type storeNotExistError string
 
 func (e storeNotExistError) Error() string {
 	return fmt.Sprintf("store at %q does not exist", string(e))
+}
+
+type entryExistError string
+
+func (e entryExistError) Error() string {
+	return fmt.Sprintf("entry with name %q already exists", string(e))
 }

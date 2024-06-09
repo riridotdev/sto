@@ -146,6 +146,27 @@ func TestAdd(t *testing.T) {
 			t.Errorf("s.add(%+v) = %q; want %q", l, err, wantErr)
 		}
 	})
+	t.Run("fail when adding link with duplicate name", func(t *testing.T) {
+		s, rootPath := newTestStore(t)
+
+		entryName := "entry-name"
+
+		e := newTestEntry(rootPath)
+		e.Name = entryName
+
+		err := s.add(e)
+		noErr(t, err)
+
+		conflictEntry := newTestEntry(rootPath)
+		conflictEntry.Name = entryName
+
+		wantErr := entryExistError(entryName)
+
+		if err := s.add(conflictEntry); err == nil || err.Error() != wantErr.Error() {
+			t.Errorf("store.add(%+v) = %v; want %v", e, err, wantErr)
+		}
+
+	})
 	t.Run("store homedir for path internally as '~'", func(t *testing.T) {
 		s, rootPath := newTestStore(t)
 
@@ -159,7 +180,7 @@ func TestAdd(t *testing.T) {
 		noErr(t, err)
 
 		assert(t, len(s.Entries) == 1)
-		internalEntry := s.Entries[0]
+		internalEntry, _ := s.Entries[e.Name]
 
 		wantPath := "~/test-link"
 
@@ -199,7 +220,7 @@ func TestAdd(t *testing.T) {
 		noErr(t, err)
 
 		assert(t, len(s.Entries) == 1)
-		internalEntry := s.Entries[0]
+		internalEntry, _ := s.Entries[e.Name]
 
 		wantPath := "source-file"
 
