@@ -94,6 +94,13 @@ func (s *store) entries() ([]link, error) {
 }
 
 func (s *store) add(l link) error {
+	if l.DestinationPath == "" {
+		return errors.New("DestinationPath empty")
+	}
+	if l.SourcePath == "" {
+		return errors.New("SourcePath empty")
+	}
+
 	if !strings.HasPrefix(l.SourcePath, s.rootPath) {
 		return sourceOutsideRootError{
 			rootPath:   s.rootPath,

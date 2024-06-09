@@ -134,7 +134,7 @@ func TestAdd(t *testing.T) {
 
 		l := link{
 			SourcePath:      "/outside-store",
-			DestinationPath: "",
+			DestinationPath: "/destination",
 		}
 
 		wantErr := sourceOutsideRootError{
@@ -226,6 +226,31 @@ func TestAdd(t *testing.T) {
 
 		if internalEntry.SourcePath != wantPath {
 			t.Errorf("entry.sourcePath = %q; want %q", internalEntry.SourcePath, wantPath)
+		}
+	})
+	t.Run("fail when adding entry with empty fields", func(t *testing.T) {
+		var e link
+
+		tests := []struct {
+			title   string
+			field   *string
+			wantErr error
+		}{
+			{title: "SourcePath", field: &e.SourcePath},
+			{title: "DestinationPath", field: &e.DestinationPath},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.title, func(t *testing.T) {
+				s, rootPath := newTestStore(t)
+
+				e = newTestEntry(rootPath)
+				*tt.field = ""
+
+				if err := s.add(e); err == nil {
+					t.Errorf("store.add(%+v) = nil; want err", e)
+				}
+			})
 		}
 	})
 }
@@ -331,7 +356,7 @@ func newTestEntry(dir string) link {
 	fileName := fmt.Sprintf("source-file-%s", randomString(8))
 	return link{
 		SourcePath:      fmt.Sprintf("%s/%s", dir, fileName),
-		DestinationPath: "",
+		DestinationPath: "/destination",
 		Name:            fileName,
 	}
 }
