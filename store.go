@@ -146,6 +146,9 @@ func (s *store) get(name string) (link, bool, error) {
 }
 
 func (s *store) update(name string, l link) error {
+	if _, ok := s.Entries[name]; !ok {
+		return entryNotExistError(name)
+	}
 	delete(s.Entries, name)
 	return s.add(l)
 }
@@ -210,4 +213,10 @@ type entryExistError string
 
 func (e entryExistError) Error() string {
 	return fmt.Sprintf("entry with name %q already exists", string(e))
+}
+
+type entryNotExistError string
+
+func (e entryNotExistError) Error() string {
+	return fmt.Sprintf("entry with name %q not found", string(e))
 }

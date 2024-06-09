@@ -392,6 +392,17 @@ func TestUpdate(t *testing.T) {
 			t.Errorf("store.get(%q) = _, true, _; want _, false, _", oldName)
 		}
 	})
+	t.Run("fail if target entry doesn't exist", func(t *testing.T) {
+		s, rootPath := newTestStore(t)
+
+		e := newTestEntry(rootPath)
+
+		wantErr := entryNotExistError(e.Name)
+
+		if err := s.update(e.Name, e); err.Error() != wantErr.Error() {
+			t.Errorf("store.update(%q) = %q; want %q", e.Name, err, wantErr)
+		}
+	})
 }
 
 func newTestStore(t *testing.T) (store, string) {
