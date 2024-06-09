@@ -343,6 +343,33 @@ func TestGet(t *testing.T) {
 	})
 }
 
+func TestUpdate(t *testing.T) {
+	t.Run("update an existing entry", func(t *testing.T) {
+		s, rootPath := newTestStore(t)
+
+		e := newTestEntry(rootPath)
+
+		err := s.add(e)
+		noErr(t, err)
+
+		oldName := e.Name
+
+		e.Name = "new-name"
+		e.SourcePath = fmt.Sprintf("%s/new-source", rootPath)
+		e.DestinationPath = "/new-path"
+
+		err = s.update(oldName, e)
+		noErr(t, err)
+
+		retrievedEntry, _, err := s.get(e.Name)
+		noErr(t, err)
+
+		if retrievedEntry != e {
+			t.Errorf("store.get(%q) = %+v, _, _; want %+v, _, _", e.Name, retrievedEntry, e)
+		}
+	})
+}
+
 func newTestStore(t *testing.T) (store, string) {
 	dir := t.TempDir()
 

@@ -145,6 +145,10 @@ func (s *store) get(name string) (link, bool, error) {
 	return externalEntry, false, nil
 }
 
+func (s *store) update(name string, l link) error {
+	return s.add(l)
+}
+
 func (s *store) persist() (err error) {
 	storeFilePath := fmt.Sprintf("%s/%s", s.rootPath, storeFileName)
 
