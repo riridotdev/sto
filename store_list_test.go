@@ -42,6 +42,40 @@ func TestAddStore(t *testing.T) {
 				"stores[%q] = %+v, %v; want %+v, true", storeName, retrievedStore, ok, s)
 		}
 	})
+	t.Run("behave idempotently when adding stores", func(t *testing.T) {
+		storeList := newTestStoreList(t)
+		_, storePath := newTestStore(t)
+
+		storeName := "test-store"
+
+		err := storeList.addStore(storeName, storePath)
+		noErr(t, err)
+		err = storeList.addStore(storeName, storePath)
+		noErr(t, err)
+
+		stores := storeList.stores()
+
+		if len(stores) != 1 {
+			t.Fatalf("len(stores) = %d; want 1", len(stores))
+		}
+	})
+	t.Run("fail when adding a new store with an existing name", func(t *testing.T) {
+		storeList := newTestStoreList(t)
+
+		_, storePath := newTestStore(t)
+		_, conflictStorePath := newTestStore(t)
+
+		storeName := "test-store"
+
+		err := storeList.addStore(storeName, storePath)
+		noErr(t, err)
+
+		wantErr := storeNameExistError(storeName)
+
+		if err := storeList.addStore(storeName, conflictStorePath); err == nil || err.Error() != wantErr.Error() {
+			t.Errorf("storeList.add(%q, %q) = %q; want %q", storeName, conflictStorePath, err, wantErr)
+		}
+	})
 }
 
 func newTestStoreList(t *testing.T) storeList {

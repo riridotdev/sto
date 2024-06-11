@@ -25,7 +25,20 @@ func (sl storeList) addStore(name string, storePath string) error {
 		return fmt.Errorf("opening store %q: %v", storePath, err)
 	}
 
+	if retrievedStore, ok := (*sl.storeMap)[name]; ok {
+		if retrievedStore.rootPath == store.rootPath {
+			return nil
+		}
+		return storeNameExistError(name)
+	}
+
 	(*sl.storeMap)[name] = &store
 
 	return nil
+}
+
+type storeNameExistError string
+
+func (e storeNameExistError) Error() string {
+	return fmt.Sprintf("store %q already exists", string(e))
 }
