@@ -154,6 +154,10 @@ func (s *store) update(name string, l link) error {
 	}
 	s.Entries[name] = internalEntry
 
+	if err := s.persist(); err != nil {
+		return fmt.Errorf("persisting store: %v", err)
+	}
+
 	return nil
 }
 
