@@ -16,6 +16,14 @@ type storeList struct {
 const storeListFileName = "storelist"
 
 func loadStoreList(path string) (storeList, error) {
+	stat, err := os.Stat(path)
+	if err != nil {
+		return storeList{}, fmt.Errorf("reading stat %q: %v", path, err)
+	}
+	if !stat.IsDir() {
+		return storeList{}, notDirectoryError(path)
+	}
+
 	storeListFilePath := fmt.Sprintf("%s/%s", path, storeListFileName)
 
 	storeMap := make(map[string]*store)

@@ -47,6 +47,15 @@ func TestLoadStoreList(t *testing.T) {
 			t.Errorf("stores[%q] = _, false; want _, true", storeName)
 		}
 	})
+	t.Run("fail when target directory is not a directory", func(t *testing.T) {
+		dir := newTestFile(t, "")
+
+		wantErr := notDirectoryError(dir)
+
+		if _, err := loadStoreList(dir); err.Error() != wantErr.Error() {
+			t.Errorf("loadStoreList(%q) = %q; want %q", dir, err, wantErr)
+		}
+	})
 }
 
 func TestAddStore(t *testing.T) {
