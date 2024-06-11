@@ -17,6 +17,9 @@ const storeListFileName = "storelist"
 
 func loadStoreList(path string) (storeList, error) {
 	stat, err := os.Stat(path)
+	if errors.Is(err, os.ErrNotExist) {
+		return storeList{}, pathNotExistError(path)
+	}
 	if err != nil {
 		return storeList{}, fmt.Errorf("reading stat %q: %v", path, err)
 	}

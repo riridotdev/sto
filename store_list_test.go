@@ -56,6 +56,15 @@ func TestLoadStoreList(t *testing.T) {
 			t.Errorf("loadStoreList(%q) = %q; want %q", dir, err, wantErr)
 		}
 	})
+	t.Run("fail when target path does not exist", func(t *testing.T) {
+		dir := "/does-not-exist"
+
+		wantErr := pathNotExistError(dir)
+
+		if _, err := loadStoreList(dir); err.Error() != wantErr.Error() {
+			t.Errorf("loadStoreList(%q) = %q; want %q", dir, err, wantErr)
+		}
+	})
 }
 
 func TestAddStore(t *testing.T) {
