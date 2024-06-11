@@ -1,5 +1,7 @@
 package main
 
+import "fmt"
+
 type storeList struct {
 	root     string
 	storeMap *map[string]*store
@@ -15,4 +17,15 @@ func loadStoreList(path string) storeList {
 
 func (sl storeList) stores() map[string]*store {
 	return *sl.storeMap
+}
+
+func (sl storeList) addStore(name string, storePath string) error {
+	store, err := openStore(storePath)
+	if err != nil {
+		return fmt.Errorf("opening store %q: %v", storePath, err)
+	}
+
+	(*sl.storeMap)[name] = &store
+
+	return nil
 }

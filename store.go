@@ -60,6 +60,7 @@ func openStore(rootPath string) (s store, err error) {
 		return store{}, fmt.Errorf("reading stat %q: %v", storeFilePath, err)
 	}
 	if stat.Size() == 0 {
+		s.Entries = make(map[string]link)
 		return s, err
 	}
 
