@@ -13,12 +13,38 @@ func TestLoadStoreList(t *testing.T) {
 	t.Run("create a new store list when target directory empty", func(t *testing.T) {
 		dir := t.TempDir()
 
-		storeList := loadStoreList(dir)
+		storeList, err := loadStoreList(dir)
+		noErr(t, err)
 
 		stores := storeList.stores()
 
 		if len(stores) != 0 {
 			t.Errorf("len(stores) = %d; want 0", len(stores))
+		}
+	})
+	t.Run("restore existing entries", func(t *testing.T) {
+		dir := t.TempDir()
+
+		storeList, err := loadStoreList(dir)
+		noErr(t, err)
+
+		_, storePath := newTestStore(t)
+
+		storeName := "test-store"
+
+		err = storeList.addStore(storeName, storePath)
+		noErr(t, err)
+
+		storeList, err = loadStoreList(dir)
+		noErr(t, err)
+
+		stores := storeList.stores()
+
+		if len(stores) != 1 {
+			t.Fatalf("len(stores) = %d; want 1", len(stores))
+		}
+		if _, ok := stores[storeName]; !ok {
+			t.Errorf("stores[%q] = _, false; want _, true", storeName)
 		}
 	})
 }
@@ -103,5 +129,7 @@ func TestAddStore(t *testing.T) {
 
 func newTestStoreList(t *testing.T) storeList {
 	dir := t.TempDir()
-	return loadStoreList(dir)
+	sl, err := loadStoreList(dir)
+	noErr(t, err)
+	return sl
 }

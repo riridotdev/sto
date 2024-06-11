@@ -1,7 +1,10 @@
 package main
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 )
 
@@ -10,12 +13,32 @@ type storeList struct {
 	storeMap *map[string]*store
 }
 
-func loadStoreList(path string) storeList {
+const storeListFileName = "storelist"
+
+func loadStoreList(path string) (storeList, error) {
+	storeListFilePath := fmt.Sprintf("%s/%s", path, storeListFileName)
+
 	storeMap := make(map[string]*store)
-	return storeList{
+
+	sl := storeList{
 		root:     path,
 		storeMap: &storeMap,
 	}
+
+	storeListFile, err := os.Open(storeListFilePath)
+	if errors.Is(err, os.ErrNotExist) {
+		return sl, nil
+	}
+	if err != nil {
+		return storeList{}, fmt.Errorf("reading storeList file %q: %v", storeListFilePath, err)
+	}
+
+	dec := json.NewDecoder(storeListFile)
+	if err := dec.Decode(&storeMap); err != nil {
+		return storeList{}, fmt.Errorf("reading storeList file %q: %v", storeListFilePath, err)
+	}
+
+	return sl, nil
 }
 
 func (sl storeList) stores() map[string]*store {
@@ -40,6 +63,26 @@ func (sl storeList) addStore(name string, storePath string) error {
 	}
 
 	(*sl.storeMap)[name] = &store
+
+	if err := sl.persist(); err != nil {
+		return fmt.Errorf("persisting store list: %v", err)
+	}
+
+	return nil
+}
+
+func (sl storeList) persist() error {
+	storeListFilePath := fmt.Sprintf("%s/%s", sl.root, storeListFileName)
+
+	f, err := os.OpenFile(storeListFilePath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+	if err != nil {
+		return fmt.Errorf("opening file %q: %v", storeListFilePath, err)
+	}
+
+	enc := json.NewEncoder(f)
+	if err := enc.Encode(sl.storeMap); err != nil {
+		return fmt.Errorf("writing to file %q: %v", storeListFilePath, err)
+	}
 
 	return nil
 }
