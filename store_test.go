@@ -37,6 +37,15 @@ func TestInitStore(t *testing.T) {
 			t.Errorf("initStore(%q) = _, %q; want _, %q", rootPath, err, wantErr)
 		}
 	})
+	t.Run("fail when target path does not exist", func(t *testing.T) {
+		rootPath := "/does-not-exist"
+
+		wantErr := pathNotExistError(rootPath)
+
+		if _, err := initStore(rootPath); err.Error() != wantErr.Error() {
+			t.Errorf("initStore(%q) = %q; want %q", rootPath, err, wantErr)
+		}
+	})
 }
 
 func TestEntries(t *testing.T) {

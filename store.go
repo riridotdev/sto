@@ -17,6 +17,9 @@ type store struct {
 
 func initStore(rootPath string) (store, error) {
 	stat, err := os.Stat(rootPath)
+	if errors.Is(err, os.ErrNotExist) {
+		return store{}, pathNotExistError(rootPath)
+	}
 	if err != nil {
 		return store{}, fmt.Errorf("reading stat %q: %v", rootPath, err)
 	}
@@ -206,6 +209,12 @@ func formatDirPath(path string) string {
 		return fmt.Sprintf("%s/", path)
 	}
 	return path
+}
+
+type pathNotExistError string
+
+func (e pathNotExistError) Error() string {
+	return fmt.Sprintf("path %q does not exist", string(e))
 }
 
 type notDirectoryError string
