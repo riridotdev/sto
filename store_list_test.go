@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"os"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -57,6 +59,27 @@ func TestAddStore(t *testing.T) {
 
 		if len(stores) != 1 {
 			t.Fatalf("len(stores) = %d; want 1", len(stores))
+		}
+	})
+	t.Run("use store directory name as default name", func(t *testing.T) {
+		storeList := newTestStoreList(t)
+
+		wantName := "default-name"
+
+		dir := t.TempDir()
+		storePath := fmt.Sprintf("%s/%s", dir, wantName)
+
+		err := os.Mkdir(storePath, 0755)
+		noErr(t, err)
+
+		_, err = initStore(storePath)
+		noErr(t, err)
+
+		err = storeList.addStore("", storePath)
+		noErr(t, err)
+
+		if _, ok := storeList.stores()[wantName]; !ok {
+			t.Errorf("storeList.stores()[%q] = _, false; want true", wantName)
 		}
 	})
 	t.Run("fail when adding a new store with an existing name", func(t *testing.T) {

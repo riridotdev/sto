@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"path/filepath"
+)
 
 type storeList struct {
 	root     string
@@ -20,6 +23,10 @@ func (sl storeList) stores() map[string]*store {
 }
 
 func (sl storeList) addStore(name string, storePath string) error {
+	if name == "" {
+		_, name = filepath.Split(storePath)
+	}
+
 	store, err := openStore(storePath)
 	if err != nil {
 		return fmt.Errorf("opening store %q: %v", storePath, err)
