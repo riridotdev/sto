@@ -94,18 +94,8 @@ func (s *store) entries() ([]link, error) {
 }
 
 func (s *store) add(l link) error {
-	if l.DestinationPath == "" {
-		return errors.New("DestinationPath empty")
-	}
-	if l.SourcePath == "" {
-		return errors.New("SourcePath empty")
-	}
-
-	if !strings.HasPrefix(l.SourcePath, s.rootPath) {
-		return sourceOutsideRootError{
-			rootPath:   s.rootPath,
-			sourcePath: l.SourcePath,
-		}
+	if err := s.validateEntry(l); err != nil {
+		return err
 	}
 
 	internalEntry, err := fromExternalEntry(l, s.rootPath)
@@ -146,11 +136,25 @@ func (s *store) get(name string) (link, bool, error) {
 }
 
 func (s *store) update(name string, l link) error {
+	if err := s.validateEntry(l); err != nil {
+		return err
+	}
 	if _, ok := s.Entries[name]; !ok {
 		return entryNotExistError(name)
 	}
-	delete(s.Entries, name)
-	return s.add(l)
+
+	internalEntry, err := fromExternalEntry(l, s.rootPath)
+	if err != nil {
+		return fmt.Errorf("converting external entry %+v: %v", l, err)
+	}
+
+	if internalEntry.Name != name {
+		delete(s.Entries, name)
+		name = internalEntry.Name
+	}
+	s.Entries[name] = internalEntry
+
+	return nil
 }
 
 func (s *store) persist() (err error) {
@@ -172,6 +176,24 @@ func (s *store) persist() (err error) {
 	}
 
 	return err
+}
+
+func (s *store) validateEntry(l link) error {
+	if l.DestinationPath == "" {
+		return errors.New("DestinationPath empty")
+	}
+	if l.SourcePath == "" {
+		return errors.New("SourcePath empty")
+	}
+
+	if !strings.HasPrefix(l.SourcePath, s.rootPath) {
+		return sourceOutsideRootError{
+			rootPath:   s.rootPath,
+			sourcePath: l.SourcePath,
+		}
+	}
+
+	return nil
 }
 
 func formatDirPath(path string) string {

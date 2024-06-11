@@ -400,7 +400,44 @@ func TestUpdate(t *testing.T) {
 		wantErr := entryNotExistError(e.Name)
 
 		if err := s.update(e.Name, e); err.Error() != wantErr.Error() {
-			t.Errorf("store.update(%q) = %q; want %q", e.Name, err, wantErr)
+			t.Errorf("store.update(%q, %+v) = %q; want %q", e.Name, e, err, wantErr)
+		}
+	})
+	t.Run("fail if new entry validation fails", func(t *testing.T) {
+		s, rootPath := newTestStore(t)
+
+		e := newTestEntry(rootPath)
+
+		err := s.add(e)
+		noErr(t, err)
+
+		e.SourcePath = "/outside-store-root"
+
+		if err = s.update(e.Name, e); err == nil {
+			t.Errorf("store.update(%q, %+v) = nil; want %q", e.Name, e, err)
+		}
+	})
+	t.Run("leave original entry untouched on fail", func(t *testing.T) {
+		s, rootPath := newTestStore(t)
+
+		e := newTestEntry(rootPath)
+
+		err := s.add(e)
+		noErr(t, err)
+
+		originalSourcePath := e.SourcePath
+		e.SourcePath = "/outside-store-root"
+
+		err = s.update(e.Name, e)
+		assert(t, err != nil)
+
+		e.SourcePath = originalSourcePath
+
+		retrievedEntry, _, err := s.get(e.Name)
+		noErr(t, err)
+
+		if retrievedEntry != e {
+			t.Errorf("store.get(%q) = %+v, _, _; want %+v, _, _", e.Name, retrievedEntry, e)
 		}
 	})
 }
