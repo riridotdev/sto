@@ -7,7 +7,7 @@ import (
 
 type storeList struct {
 	storeListFile jsonFile
-	storeMap      *map[string]*store
+	storeMap      map[string]*store
 }
 
 type storeListEntry struct {
@@ -27,7 +27,7 @@ func loadStoreList(path string) (storeList, error) {
 	storeMap := make(map[string]*store)
 	sl := storeList{
 		storeListFile: storeListFile,
-		storeMap:      &storeMap,
+		storeMap:      storeMap,
 	}
 
 	var storeListEntries []storeListEntry
@@ -47,7 +47,7 @@ func loadStoreList(path string) (storeList, error) {
 }
 
 func (sl storeList) stores() map[string]*store {
-	return *sl.storeMap
+	return sl.storeMap
 }
 
 func (sl storeList) addStore(name string, storePath string) error {
@@ -60,14 +60,14 @@ func (sl storeList) addStore(name string, storePath string) error {
 		return fmt.Errorf("opening store %q: %v", storePath, err)
 	}
 
-	if retrievedStore, ok := (*sl.storeMap)[name]; ok {
+	if retrievedStore, ok := (sl.storeMap)[name]; ok {
 		if retrievedStore.rootPath == store.rootPath {
 			return nil
 		}
 		return storeNameExistError(name)
 	}
 
-	(*sl.storeMap)[name] = &store
+	(sl.storeMap)[name] = &store
 
 	if err := sl.persist(); err != nil {
 		return fmt.Errorf("persisting store list: %v", err)
@@ -79,7 +79,7 @@ func (sl storeList) addStore(name string, storePath string) error {
 func (sl storeList) persist() error {
 	var storeListEntries []storeListEntry
 
-	for name, store := range *sl.storeMap {
+	for name, store := range sl.storeMap {
 		storeListEntries = append(storeListEntries, storeListEntry{
 			Name: name,
 			Root: store.rootPath,
