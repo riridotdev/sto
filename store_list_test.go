@@ -50,19 +50,15 @@ func TestLoadStoreList(t *testing.T) {
 	t.Run("fail when target directory is not a directory", func(t *testing.T) {
 		dir := newTestFile(t, "")
 
-		wantErr := notDirectoryError(dir)
-
-		if _, err := loadStoreList(dir); err.Error() != wantErr.Error() {
-			t.Errorf("loadStoreList(%q) = %q; want %q", dir, err, wantErr)
+		if _, err := loadStoreList(dir); err == nil {
+			t.Errorf("loadStoreList(%q) = nil; want err", dir)
 		}
 	})
 	t.Run("fail when target path does not exist", func(t *testing.T) {
 		dir := "/does-not-exist"
 
-		wantErr := pathNotExistError(dir)
-
-		if _, err := loadStoreList(dir); err.Error() != wantErr.Error() {
-			t.Errorf("loadStoreList(%q) = %q; want %q", dir, err, wantErr)
+		if _, err := loadStoreList(dir); err == nil {
+			t.Errorf("loadStoreList(%q) = nil; want err", dir)
 		}
 	})
 }

@@ -1,16 +1,13 @@
 package main
 
 import (
-	"encoding/json"
-	"errors"
 	"fmt"
-	"os"
 	"path/filepath"
 )
 
 type storeList struct {
-	root     string
-	storeMap *map[string]*store
+	storeListFile jsonFile
+	storeMap      *map[string]*store
 }
 
 type storeListEntry struct {
@@ -21,39 +18,21 @@ type storeListEntry struct {
 const storeListFileName = "storelist"
 
 func loadStoreList(path string) (storeList, error) {
-	stat, err := os.Stat(path)
-	if errors.Is(err, os.ErrNotExist) {
-		return storeList{}, pathNotExistError(path)
-	}
-	if err != nil {
-		return storeList{}, fmt.Errorf("reading stat %q: %v", path, err)
-	}
-	if !stat.IsDir() {
-		return storeList{}, notDirectoryError(path)
-	}
-
 	storeListFilePath := fmt.Sprintf("%s/%s", path, storeListFileName)
+	storeListFile, err := newJsonFile(storeListFilePath)
+	if err != nil {
+		return storeList{}, err
+	}
 
 	storeMap := make(map[string]*store)
-
 	sl := storeList{
-		root:     path,
-		storeMap: &storeMap,
+		storeListFile: storeListFile,
+		storeMap:      &storeMap,
 	}
 
 	var storeListEntries []storeListEntry
-
-	storeListFile, err := os.Open(storeListFilePath)
-	if errors.Is(err, os.ErrNotExist) {
-		return sl, nil
-	}
-	if err != nil {
-		return storeList{}, fmt.Errorf("reading storeList file %q: %v", storeListFilePath, err)
-	}
-
-	dec := json.NewDecoder(storeListFile)
-	if err := dec.Decode(&storeListEntries); err != nil {
-		return storeList{}, fmt.Errorf("reading storeList file %q: %v", storeListFilePath, err)
+	if err := sl.storeListFile.read(&storeListEntries); err != nil {
+		return storeList{}, fmt.Errorf("reading store list file: %v", err)
 	}
 
 	for _, entry := range storeListEntries {
@@ -98,13 +77,6 @@ func (sl storeList) addStore(name string, storePath string) error {
 }
 
 func (sl storeList) persist() error {
-	storeListFilePath := fmt.Sprintf("%s/%s", sl.root, storeListFileName)
-
-	f, err := os.OpenFile(storeListFilePath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
-	if err != nil {
-		return fmt.Errorf("opening file %q: %v", storeListFilePath, err)
-	}
-
 	var storeListEntries []storeListEntry
 
 	for name, store := range *sl.storeMap {
@@ -114,9 +86,8 @@ func (sl storeList) persist() error {
 		})
 	}
 
-	enc := json.NewEncoder(f)
-	if err := enc.Encode(&storeListEntries); err != nil {
-		return fmt.Errorf("writing to file %q: %v", storeListFilePath, err)
+	if err := sl.storeListFile.write(&storeListEntries); err != nil {
+		return fmt.Errorf("writing store file: %v", err)
 	}
 
 	return nil
