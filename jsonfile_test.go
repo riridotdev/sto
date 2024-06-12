@@ -64,6 +64,26 @@ func TestRead(t *testing.T) {
 	})
 }
 
+func TestWrite(t *testing.T) {
+	t.Run("write an array of strings", func(t *testing.T) {
+		jf := newTestJsonFile(t)
+
+		wantItems := []string{"hello", "world"}
+
+		err := jf.write(&wantItems)
+		noErr(t, err)
+
+		var items []string
+
+		err = jf.read(&items)
+		noErr(t, err)
+
+		if !cmp.Equal(items, wantItems) {
+			t.Errorf("items != wantItems\n%s", cmp.Diff(items, wantItems))
+		}
+	})
+}
+
 func newTestJsonFile(t *testing.T) jsonFile {
 	dir := t.TempDir()
 
