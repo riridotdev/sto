@@ -13,6 +13,11 @@ type storeList struct {
 	storeMap *map[string]*store
 }
 
+type storeListEntry struct {
+	Name string
+	Root string
+}
+
 const storeListFileName = "storelist"
 
 func loadStoreList(path string) (storeList, error) {
@@ -36,6 +41,8 @@ func loadStoreList(path string) (storeList, error) {
 		storeMap: &storeMap,
 	}
 
+	var storeListEntries []storeListEntry
+
 	storeListFile, err := os.Open(storeListFilePath)
 	if errors.Is(err, os.ErrNotExist) {
 		return sl, nil
@@ -45,8 +52,16 @@ func loadStoreList(path string) (storeList, error) {
 	}
 
 	dec := json.NewDecoder(storeListFile)
-	if err := dec.Decode(&storeMap); err != nil {
+	if err := dec.Decode(&storeListEntries); err != nil {
 		return storeList{}, fmt.Errorf("reading storeList file %q: %v", storeListFilePath, err)
+	}
+
+	for _, entry := range storeListEntries {
+		store, err := openStore(entry.Root)
+		if err != nil {
+			return storeList{}, fmt.Errorf("opening store %q: %v", entry.Name, err)
+		}
+		storeMap[entry.Name] = &store
 	}
 
 	return sl, nil
@@ -90,8 +105,17 @@ func (sl storeList) persist() error {
 		return fmt.Errorf("opening file %q: %v", storeListFilePath, err)
 	}
 
+	var storeListEntries []storeListEntry
+
+	for name, store := range *sl.storeMap {
+		storeListEntries = append(storeListEntries, storeListEntry{
+			Name: name,
+			Root: store.rootPath,
+		})
+	}
+
 	enc := json.NewEncoder(f)
-	if err := enc.Encode(sl.storeMap); err != nil {
+	if err := enc.Encode(&storeListEntries); err != nil {
 		return fmt.Errorf("writing to file %q: %v", storeListFilePath, err)
 	}
 
