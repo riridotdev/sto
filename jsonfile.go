@@ -18,3 +18,7 @@ func newJsonFile(path string) (jsonFile, error) {
 
 	return jsonFile(path), nil
 }
+
+func (jf jsonFile) read(data interface{}) error {
+	return nil
+}

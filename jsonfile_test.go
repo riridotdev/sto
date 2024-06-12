@@ -48,3 +48,29 @@ func TestNewJsonFile(t *testing.T) {
 		}
 	})
 }
+
+func TestRead(t *testing.T) {
+	t.Run("read an empty file", func(t *testing.T) {
+		jf := newTestJsonFile(t)
+
+		var items []string
+
+		err := jf.read(&items)
+		noErr(t, err)
+
+		if len(items) != 0 {
+			t.Errorf("len(items) = %d; want 0", len(items))
+		}
+	})
+}
+
+func newTestJsonFile(t *testing.T) jsonFile {
+	dir := t.TempDir()
+
+	filePath := fmt.Sprintf("%s/test-file", dir)
+
+	jf, err := newJsonFile(filePath)
+	noErr(t, err)
+
+	return jf
+}
