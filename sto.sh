@@ -46,7 +46,11 @@ function apply_link() {
         echo "Conflicting file at $escaped_destination_file" >&2
     fi
 
-    ln -sn $current_store_root/$source_file $escaped_destination_file
+    if [ ! -d $(dirname $escaped_destination_file) ]; then
+        mkdir -p $(dirname $escaped_destination_file)
+    fi
+
+    ln -snf $current_store_root/$source_file $escaped_destination_file
 
     echo "[LINKED] $source_file -> $destination_file"
 }
