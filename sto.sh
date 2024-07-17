@@ -196,6 +196,7 @@ function run_apply() {
     fi
 
     set_current_profile $store_root
+    load_store
 
     while read current_line; do
         source_file=$(echo $current_line | cut -f1 -d=)
