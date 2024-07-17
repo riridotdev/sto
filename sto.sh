@@ -112,7 +112,7 @@ function run_list() {
         source_file=$(echo $current_line | cut -f1 -d=)
         destination_file=$(echo $current_line | cut -f2 -d=)
 
-        if [ ! -f $current_store_root/$source_file ]; then
+        if [ ! -e $current_store_root/$source_file ]; then
             echo -e "[BROKEN] $source_file -> $destination_file"
             continue
         fi
