@@ -184,14 +184,16 @@ function run_apply() {
         exit 1
     fi
 
-    load_store
+    if [ -f $state_file ]; then
+        load_store
 
-    while read current_line; do
-        source_file=$(echo $current_line | cut -f1 -d=)
-        destination_file=$(echo $current_line | cut -f2 -d=)
+        while read current_line; do
+            source_file=$(echo $current_line | cut -f1 -d=)
+            destination_file=$(echo $current_line | cut -f2 -d=)
 
-        remove_link $source_file $destination_file
-    done < $current_store_file
+            remove_link $source_file $destination_file
+        done < $current_store_file
+    fi
 
     set_current_profile $store_root
 
